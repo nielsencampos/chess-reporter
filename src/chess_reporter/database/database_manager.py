@@ -2,6 +2,8 @@
 Database manager for the Chess Reporter application.
 """
 
+from __future__ import annotations
+
 from logging import Logger, getLogger
 from typing import Any, Dict, List, Optional, overload
 
@@ -107,12 +109,7 @@ class DatabaseManager:
             exp.Delete,
             exp.Merge,
         )
-        DDL = (
-            exp.Create,
-            exp.Alter,
-            exp.Drop,
-            exp.TruncateTable,
-        )
+        DDL = (exp.Create, exp.Alter, exp.Drop, exp.TruncateTable, exp.Comment, exp.Command)
         DCL = (
             exp.Grant,
             exp.Revoke,
@@ -127,7 +124,8 @@ class DatabaseManager:
         elif isinstance(expression, DQL):
             return QueryType.DQL
         else:
-            error: str = "Unsupported SQL query type"
+            sql: str = expression.sql(dialect="duckdb")
+            error: str = "Unsupported SQL query type for statement `%s`" % sql
 
             LOGGER.error(error)
             raise ValueError(error)
