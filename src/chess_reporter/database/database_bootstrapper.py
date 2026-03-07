@@ -15,6 +15,9 @@ LOGGER: Logger = getLogger(__name__)
 class DatabaseBootstrapper:
     """
     Bootstraps the database for the Chess Reporter application.
+
+    Methods:
+        bootstrap: Bootstraps the database by executing the SQL files for schemas and tables.
     """
 
     def __init__(self) -> None:

@@ -5,7 +5,7 @@ Database manager for the Chess Reporter application.
 from __future__ import annotations
 
 from logging import Logger, getLogger
-from typing import Any, Dict, List, Optional, overload
+from typing import Any, Dict, List, Optional, Tuple, overload
 
 from duckdb import DuckDBPyConnection, connect
 from pandas import DataFrame
@@ -144,14 +144,29 @@ class DatabaseManager:
                     or None for other query types.
         """
         try:
+            sql: str = query.sql
+
+            LOGGER.debug(f"Executing SQL\n{sql}")
+
             if query.query_type.has_data:
-                result: DataFrame = self.connection.execute(query.sql).fetchdf()
+                result: DataFrame = self.connection.execute(sql).fetchdf()
+
+                rows_returned: int = len(result)
+
+                LOGGER.info(f"Query returned {rows_returned} rows")
 
                 return result
             else:
-                self.connection.execute(query.sql)
+                self.connection.execute(sql)
 
-                return None
+                affected: Optional[Tuple[Any, ...]] = self.connection.execute(
+                    "SELECT changes()"
+                ).fetchone()
+                rows_affected: int = affected[0] if affected else 0
+
+                LOGGER.info(f"Query affected {rows_affected} rows")
+
+                return
         except Exception:
             LOGGER.exception("An error occurred while executing the SQL query on the database")
             raise
@@ -230,7 +245,11 @@ class DatabaseManager:
             raise ValueError(error)
 
         try:
+            rows_inserted: int = len(df)
+
             self.connection.append(table_name=table_name, df=df, by_name=True)
+
+            LOGGER.info(f"Inserted {rows_inserted} rows into table `{table_name}`")
         except Exception:
             LOGGER.exception("An error occurred while inserting data into the database")
             raise
@@ -295,15 +314,15 @@ class DatabaseManager:
             raise
 
     @overload
-    def insert_data(self, table_name: str, data: DataFrame) -> None: ...
+    def insert(self, table_name: str, data: DataFrame) -> None: ...
 
     @overload
-    def insert_data(self, table_name: str, data: List[Dict[str, Any]]) -> None: ...
+    def insert(self, table_name: str, data: List[Dict[str, Any]]) -> None: ...
 
     @overload
-    def insert_data(self, table_name: str, data: Dict[str, Any]) -> None: ...
+    def insert(self, table_name: str, data: Dict[str, Any]) -> None: ...
 
-    def insert_data(self, table_name: str, data: Any) -> None:
+    def insert(self, table_name: str, data: Any) -> None:
         """
         Inserts data into a specified table in the DuckDB database, accepting various formats of
             input data.
@@ -324,11 +343,11 @@ class DatabaseManager:
                     - A single dictionary representing a single row of data.
         """
         if isinstance(data, DataFrame):
-            self.__insert_df(table_name=table_name, df=data)
+            self.__insert_df(table_name, data)
         elif isinstance(data, list) and all(isinstance(row, dict) for row in data):
-            self.__insert_data(table_name=table_name, data=data)
+            self.__insert_data(table_name, data)
         elif isinstance(data, dict):
-            self.__insert_row(table_name=table_name, row=data)
+            self.__insert_row(table_name, data)
         else:
             error: str = (
                 "Data must be a valid non-empty DataFrame, a list of dictionaries, or a single "
