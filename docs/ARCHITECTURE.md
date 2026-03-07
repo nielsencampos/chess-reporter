@@ -12,16 +12,16 @@ The system processes chess games stored in PGN files, evaluates each position us
 
 High-level flow:
 
-PGN File  
-↓  
-PGN Parser  
-↓  
-Engine Analysis  
-↓  
-Evaluation Processing  
-↓  
-Storage  
-↓  
+PGN File
+↓
+PGN Parser
+↓
+Engine Analysis
+↓
+Evaluation Processing
+↓
+Storage
+↓
 Report Generation
 
 Each stage is responsible for a specific transformation of the game.
