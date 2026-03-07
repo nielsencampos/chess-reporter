@@ -24,13 +24,13 @@ jobs:
         run: uv sync --dev
 
       - name: Run ruff
-        run: uv run ruff check .
+        run: uv run --with ruff ruff check .
 
       - name: Run ruff format check
-        run: uv run ruff format --check .
+        run: uv run --with ruff ruff format --check .
 
       - name: Run tests
-        run: uvx pytest
+        run: uv run --with pytest pytest
 
       - name: Run pyright
-        run: uv run pyright
+        run: uv run --with pyright pyright
