@@ -24,7 +24,10 @@ jobs:
         run: uv sync --dev
 
       - name: Run ruff
-        run: uvx ruff check .
+        run: uvx ruff format --check .
 
       - name: Run tests
         run: uvx pytest
+
+      - name: Run pyright
+        run: uvx pyright
