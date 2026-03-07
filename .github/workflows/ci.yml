@@ -23,14 +23,14 @@ jobs:
       - name: Install dependencies
         run: uv sync --dev
 
-      - name: Run ruff format
-        run: uvx ruff format .
-      
-      - name: Run ruff check
-        run: uvx ruff check .
+      - name: Run ruff
+        run: uv run ruff check .
+
+      - name: Run ruff format check
+        run: uv run ruff format --check .
 
       - name: Run tests
         run: uvx pytest
 
       - name: Run pyright
-        run: uvx pyright
+        run: uv run pyright
