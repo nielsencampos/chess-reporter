@@ -28,6 +28,3 @@ dist/
 # OS files
 .DS_Store
 Thumbs.db
-
-# Claude Dev Helper
-.claude-dev-helper/
