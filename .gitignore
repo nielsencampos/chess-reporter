@@ -1,0 +1,33 @@
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Python build artifacts
+build/
+dist/
+*.egg-info/
+
+# Python tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Environment variables
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Claude Dev Helper
+.claude-dev-helper/
