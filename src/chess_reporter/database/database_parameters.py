@@ -19,15 +19,9 @@ class DatabaseParameters(BaseModel):
         default=Path("data/database/chess_reporter.duckdb"),
         description="Path to the DuckDB database file",
     )
-    threads: int = Field(
-        default=4, description="Number of execution threads for DuckDB"
-    )
-    memory_limit: str = Field(
-        default="8GB", description="Maximum memory limit for DuckDB"
-    )
-    default_schema: str = Field(
-        default="src", description="Default schema used by the application"
-    )
+    threads: int = Field(default=4, description="Number of execution threads for DuckDB")
+    memory_limit: str = Field(default="8GB", description="Maximum memory limit for DuckDB")
+    default_schema: str = Field(default="src", description="Default schema used by the application")
 
     @property
     def config(self) -> Dict[str, Any]:
