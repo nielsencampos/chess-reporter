@@ -58,8 +58,14 @@ def clean_precommit_cache() -> None:
     Cleans up pre-commit cache by running the 'pre-commit clean' command.
     """
     print("\n🔧 Cleaning pre-commit cache...")
+    print("\n🔧 Cleaning pre-commit cache...")
+    precommit = which("pre-commit")
+
+    if precommit is None:
+        print("  ✗ pre-commit not found in PATH.")
+        return
     result = run(
-        ["pre-commit", "clean"],
+        [precommit, "clean"],
         capture_output=True,
         text=True,
     )
