@@ -5,10 +5,14 @@ Database bootstrapper for the Chess Reporter application.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from loguru import logger
 
 from chess_reporter.database.database_manager import DatabaseManager
+
+if TYPE_CHECKING:
+    from loguru import Logger
 
 
 class DatabaseBootstrapper:
@@ -28,7 +32,7 @@ class DatabaseBootstrapper:
         self.__schemas_file_path: Path = sqls_dir / "schemas.sql"
         self.__tables_file_path: Path = sqls_dir / "tables.sql"
         self.___tests_file_path: Path = sqls_dir / "tests.sql"
-        self.__logger = logger.bind(name="chess-reporter")
+        self.__logger: Logger = logger.bind(name="chess-reporter")
 
         self.__validate_sql_files()
 

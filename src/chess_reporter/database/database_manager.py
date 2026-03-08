@@ -4,7 +4,7 @@ Database manager for the Chess Reporter application.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, overload
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, overload
 
 from duckdb import DuckDBPyConnection, connect
 from loguru import logger
@@ -13,6 +13,9 @@ from sqlglot import Expression, exp, parse
 
 from chess_reporter.database.database_domain import Query, QueryType
 from chess_reporter.database.database_parameters import DatabaseParameters
+
+if TYPE_CHECKING:
+    from loguru import Logger
 
 
 class DatabaseManager:
@@ -36,7 +39,7 @@ class DatabaseManager:
         """
         self.__parameters: DatabaseParameters = DatabaseParameters()
         self.__connection: Optional[DuckDBPyConnection] = None
-        self.__logger = logger.bind(name="chess-reporter")
+        self.__logger: Logger = logger.bind(name="chess-reporter")
 
     def __connect(self) -> None:
         """

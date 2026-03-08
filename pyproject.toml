@@ -10,6 +10,7 @@ dependencies = [
     "loguru>=0.7.3",
     "pandas>=3.0.1",
     "pydantic>=2.12.5",
+    "python-chess>=1.999",
     "sqlglot>=29.0.1",
 ]
 

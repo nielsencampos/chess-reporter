@@ -31,10 +31,8 @@ spec:
         - name: chess-reporter
           image: ghcr.io/nielsencampos/chess-reporter:latest
           env:
-            - name: CHESS_ENGINE_HOST
-              value: "chess-engine"
-            - name: CHESS_ENGINE_PORT
-              value: "8080"
+            - name: STOCKFISH_PATH
+              value: "/usr/local/bin/stockfish"
           volumeMounts:
             - name: data
               mountPath: /app/data
@@ -43,7 +41,7 @@ spec:
               memory: "1Gi"
               cpu: "1000m"
             limits:
-              memory: "8Gi"
+              memory: "16Gi"
               cpu: "8000m"
       volumes:
         - name: data

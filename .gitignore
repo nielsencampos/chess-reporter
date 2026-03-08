@@ -1,3 +1,6 @@
+#Binaries
+bin/
+
 # Byte-compiled / optimized files
 __pycache__/
 *.py[cod]

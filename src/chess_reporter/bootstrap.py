@@ -40,8 +40,8 @@ def setup_logger(level: str = "DEBUG") -> None:
         colorize=True,
     )
 
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    logger_file_name = "logs/chess_reporter_{}.log".format(timestamp)
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+    logger_file_name = "logs/chess_reporter_bootstrap_{}.log".format(timestamp)
 
     logger.add(
         logger_file_name,

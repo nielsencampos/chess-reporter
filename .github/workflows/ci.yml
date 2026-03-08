@@ -75,13 +75,3 @@ jobs:
           tags: ${{ env.REGISTRY }}/nielsencampos/chess-reporter:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Build and push chess-engine
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: docker/chess-engine.Dockerfile
-          push: true
-          tags: ${{ env.REGISTRY }}/nielsencampos/chess-engine:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max

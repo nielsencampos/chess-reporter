@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS chess_reporter.chess_engine (
     CONSTRAINT threads_valid CHECK (threads >= 1),
     CONSTRAINT hash_table_mb_valid CHECK (hash_table_mb >= 1024),
     CONSTRAINT depth_valid CHECK (depth >= 15),
-    CONSTRAINT evaluation_runs_valid CHECK (evaluation_runs IN (1, 3, 5, 7))
+    CONSTRAINT evaluation_runs_valid CHECK (evaluation_runs >= 3 AND evaluation_runs % 2 = 1)
 );
 COMMENT ON TABLE chess_reporter.chess_engine
     IS 'Chess engine configuration data';

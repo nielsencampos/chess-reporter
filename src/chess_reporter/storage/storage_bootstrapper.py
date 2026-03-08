@@ -5,10 +5,14 @@ Storage bootstrapper for the Chess Reporter application.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from loguru import logger
 
 from chess_reporter.storage.storage_parameters import StorageParameters
+
+if TYPE_CHECKING:
+    from loguru import Logger
 
 
 class StorageBootstrapper:
@@ -24,7 +28,7 @@ class StorageBootstrapper:
         Initializes the StorageBootstrapper.
         """
         self.__parameters: StorageParameters = StorageParameters()
-        self.__logger = logger.bind(name="chess-reporter")
+        self.__logger: Logger = logger.bind(name="chess-reporter")
 
     def bootstrap(self) -> None:
         """
