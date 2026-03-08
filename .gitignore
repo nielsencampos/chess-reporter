@@ -28,6 +28,9 @@ dist/
 # Logs
 logs/
 
+# Secrets
+secrets.toml
+
 # OS files
 .DS_Store
 Thumbs.db

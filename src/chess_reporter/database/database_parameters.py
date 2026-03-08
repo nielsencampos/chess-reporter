@@ -20,7 +20,7 @@ class DatabaseParameters(BaseModel):
         description="Path to the DuckDB database file",
     )
     threads: int = Field(default=4, description="Number of execution threads for DuckDB")
-    memory_limit: str = Field(default="8GB", description="Maximum memory limit for DuckDB")
+    memory_limit: str = Field(default="4GB", description="Maximum memory limit for DuckDB")
 
     @property
     def config(self) -> Dict[str, Any]:

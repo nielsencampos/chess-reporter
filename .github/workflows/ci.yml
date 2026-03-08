@@ -4,6 +4,10 @@ on:
   push:
   pull_request:
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -18,19 +22,63 @@ jobs:
           python-version: "3.13"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v1
+        uses: astral-sh/setup-uv@v5
 
       - name: Install dependencies
-        run: uv sync --dev
+        run: uv sync --frozen
 
-      - name: Run ruff
-        run: uv run --with ruff ruff check .
+      - name: Run linter
+        run: uv run ruff check .
 
-      - name: Run ruff format check
-        run: uv run --with ruff ruff format --check .
+      - name: Run type check
+        run: uv run pyright
 
       - name: Run tests
-        run: uv run --with pytest pytest
+        run: uv run pytest
 
-      - name: Run pyright
-        run: uv run --with pyright pyright
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest
+
+      - name: Build and push chess-reporter
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/chess-reporter.Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/nielsencampos/chess-reporter:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push chess-engine
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/chess-engine.Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/nielsencampos/chess-engine:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
