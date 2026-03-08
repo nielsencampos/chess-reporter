@@ -6,7 +6,7 @@ Clean up Python cache files and UV/pre-commit caches.
 from __future__ import annotations
 
 from pathlib import Path
-from shutil import rmtree
+from shutil import rmtree, which
 from subprocess import run
 
 
@@ -36,8 +36,14 @@ def clean_pycache(root: Path) -> None:
 
 def clean_uv_cache() -> None:
     print("\n📦 Cleaning UV cache...")
+    uv = which("uv")
+
+    if uv is None:
+        print("  ✗ uv not found in PATH.")
+        return
+
     result = run(
-        ["uv", "cache", "clean"],
+        [uv, "cache", "clean"],
         capture_output=True,
         text=True,
     )
