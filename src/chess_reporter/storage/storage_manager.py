@@ -7,7 +7,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import List, Optional, Union
 
-from loguru import Logger, logger
+from loguru import logger
 
 from chess_reporter.storage.storage_parameters import StorageParameters
 
@@ -32,7 +32,7 @@ class StorageManager:
         Initializes the StorageManager.
         """
         self.__parameters: StorageParameters = StorageParameters()
-        self.__logger: Logger = logger.bind(name="chess-reporter")
+        self.__logger = logger.bind(name="chess-reporter")
 
     def __get_folder_path(self, folder_name: str) -> Path:
         """

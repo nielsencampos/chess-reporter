@@ -27,4 +27,8 @@ class DatabaseParameters(BaseModel):
         """
         DuckDB runtime configuration parameters.
         """
-        return {"threads": self.threads, "memory_limit": self.memory_limit}
+        return {
+            "threads": self.threads,
+            "memory_limit": self.memory_limit,
+            "storage_compatibility_version": "latest",
+        }

@@ -16,7 +16,7 @@ class StorageParameters(BaseModel):
     """
 
     path: Path = Field(
-        default=Path("data/database/storage"),
+        default=Path("data/storage"),
         description="Path to the storage directory",
     )
     folders: Set[str] = Field(

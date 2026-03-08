@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from loguru import Logger, logger
+from loguru import logger
 
 from chess_reporter.database.database_manager import DatabaseManager
 
@@ -27,7 +27,7 @@ class DatabaseBootstrapper:
 
         self.__schemas_file_path: Path = sqls_dir / "schemas.sql"
         self.__tables_file_path: Path = sqls_dir / "tables.sql"
-        self.__logger: Logger = logger.bind(name="chess-reporter")
+        self.__logger = logger.bind(name="chess-reporter")
 
         self.__validate_sql_files()
 

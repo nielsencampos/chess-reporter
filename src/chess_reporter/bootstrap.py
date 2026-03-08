@@ -4,6 +4,7 @@ Bootstrap
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from sys import stdout
 
 from loguru import logger
@@ -38,8 +39,11 @@ def setup_logger(level: str = "DEBUG") -> None:
         colorize=True,
     )
 
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    logger_file_name = "logs/chess_reporter_{}.log".format(timestamp)
+
     logger.add(
-        "logs/chess_reporter.log",
+        logger_file_name,
         level=level,
         rotation="10 MB",  # novo arquivo a cada 10MB
         retention="7 days",  # mantém logs por 7 dias
@@ -51,8 +55,8 @@ def main():
     """
     Main function to bootstrap the Chess Reporter application.
     """
-    DatabaseBootstrapper().bootstrap()
     StorageBootstrapper().bootstrap()
+    DatabaseBootstrapper().bootstrap()
 
 
 if __name__ == "__main__":

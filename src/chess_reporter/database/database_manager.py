@@ -4,10 +4,10 @@ Database manager for the Chess Reporter application.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple, overload
+from typing import Any, Dict, List, Optional, overload
 
 from duckdb import DuckDBPyConnection, connect
-from loguru import Logger, logger
+from loguru import logger
 from pandas import DataFrame
 from sqlglot import Expression, exp, parse
 
@@ -36,7 +36,7 @@ class DatabaseManager:
         """
         self.__parameters: DatabaseParameters = DatabaseParameters()
         self.__connection: Optional[DuckDBPyConnection] = None
-        self.__logger: Logger = logger.bind(name="chess-reporter")
+        self.__logger = logger.bind(name="chess-reporter")
 
     def __connect(self) -> None:
         """
@@ -50,7 +50,7 @@ class DatabaseManager:
             self.__parameters.path.parent.mkdir(parents=True, exist_ok=True)
         except Exception:
             self.__logger.exception(
-                "Failed to create parent directory for database file `%s`", self.__parameters.path
+                "Failed to create parent directory for database file `{}`", self.__parameters.path
             )
             raise
 
@@ -124,7 +124,7 @@ class DatabaseManager:
             return QueryType.DQL
         else:
             sql: str = expression.sql(dialect="duckdb")
-            error: str = "Unsupported SQL query type for statement `%s`" % sql
+            error: str = "Unsupported SQL query type for statement `{}`" % sql
 
             self.__logger.error(error)
             raise ValueError(error)
@@ -145,25 +145,22 @@ class DatabaseManager:
         try:
             sql: str = query.sql
 
-            self.__logger.debug("Executing SQL\n%s", sql)
+            self.__logger.debug("Executing SQL\n{}", sql)
 
             if query.query_type.has_data:
                 result: DataFrame = self.connection.execute(sql).fetchdf()
 
                 rows_returned: int = len(result)
 
-                self.__logger.info("Query returned %s rows", rows_returned)
+                self.__logger.info("Query returned {} rows", rows_returned)
 
                 return result
             else:
                 self.connection.execute(sql)
 
-                affected: Optional[Tuple[Any, ...]] = self.connection.execute(
-                    "SELECT changes()"
-                ).fetchone()
-                rows_affected: int = affected[0] if affected else 0
+                rows_affected: int = abs(self.connection.rowcount) or 0
 
-                self.__logger.info("Query affected %s rows", rows_affected)
+                self.__logger.info("Query affected {} rows", rows_affected)
 
                 return
         except Exception:
@@ -220,7 +217,7 @@ class DatabaseManager:
 
             return queries_statements.copy()
         except Exception:
-            self.__logger.exception("Failed to parse SQL query `%s`", sql)
+            self.__logger.exception("Failed to parse SQL query `{}`", sql)
             raise
 
     def __insert_df(self, table_name: str, df: DataFrame) -> None:
@@ -250,7 +247,7 @@ class DatabaseManager:
 
             self.connection.append(table_name=table_name, df=df, by_name=True)
 
-            self.__logger.info("Inserted %s rows into table `%s`", rows_inserted, table_name)
+            self.__logger.info("Inserted {} rows into table `{}`", rows_inserted, table_name)
         except Exception:
             self.__logger.exception("An error occurred while inserting data into the database")
             raise
