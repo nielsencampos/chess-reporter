@@ -150,20 +150,9 @@ class DatabaseManager:
             if query.query_type == QueryType.DQL:
                 result: DataFrame = self.connection.execute(sql).fetchdf()
 
-                rows_returned: int = len(result)
-
-                self.__logger.info("Query returned {} rows", rows_returned)
-
                 return result
             else:
                 self.connection.execute(sql)
-
-                if query.query_type == QueryType.DML:
-                    rows_affected: int = abs(self.connection.rowcount) or 0
-
-                    self.__logger.info("Query affected {} rows", rows_affected)
-                else:
-                    self.__logger.info("Query executed successfully")
 
                 return
         except Exception:
@@ -193,8 +182,6 @@ class DatabaseManager:
             self.__logger.error(error)
             raise ValueError(error)
 
-        self.connection.execute("BEGIN")
-
         try:
             expressions: List[Optional[Expression]] = parse(sql=sql, dialect="duckdb")
 
@@ -220,16 +207,10 @@ class DatabaseManager:
 
                 queries_statements.append(query)
 
-            self.connection.execute("COMMIT")
-
             return queries_statements.copy()
         except Exception:
-            self.connection.execute("ROLLBACK")
-
             self.__logger.exception("Failed to parse SQL query `{}`", sql)
             raise
-        finally:
-            self.connection.execute("COMMIT")
 
     def __insert_df(self, table_name: str, df: DataFrame) -> None:
         """

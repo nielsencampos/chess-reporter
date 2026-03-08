@@ -34,10 +34,8 @@ class StorageBootstrapper:
         while logging the actions taken.
         """
         for folder_name in self.__parameters.folders:
-            folder_path: Path = self.__parameters.path / folder_name
-
             for subfolder_name in self.__parameters.subfolders:
-                folder_path = folder_path / subfolder_name
+                folder_path: Path = self.__parameters.path / folder_name / subfolder_name
 
                 if not folder_path.exists():
                     folder_path.mkdir(parents=True, exist_ok=True)
