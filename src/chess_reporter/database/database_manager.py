@@ -4,17 +4,15 @@ Database manager for the Chess Reporter application.
 
 from __future__ import annotations
 
-from logging import Logger, getLogger
 from typing import Any, Dict, List, Optional, Tuple, overload
 
 from duckdb import DuckDBPyConnection, connect
+from loguru import Logger, logger
 from pandas import DataFrame
 from sqlglot import Expression, exp, parse
 
 from chess_reporter.database.database_domain import Query, QueryType
 from chess_reporter.database.database_parameters import DatabaseParameters
-
-LOGGER: Logger = getLogger(__name__)
 
 
 class DatabaseManager:
@@ -38,6 +36,7 @@ class DatabaseManager:
         """
         self.__parameters: DatabaseParameters = DatabaseParameters()
         self.__connection: Optional[DuckDBPyConnection] = None
+        self.__logger: Logger = logger.bind(name="chess-reporter")
 
     def __connect(self) -> None:
         """
@@ -50,7 +49,7 @@ class DatabaseManager:
         try:
             self.__parameters.path.parent.mkdir(parents=True, exist_ok=True)
         except Exception:
-            LOGGER.exception(
+            self.__logger.exception(
                 "Failed to create parent directory for database file `%s`", self.__parameters.path
             )
             raise
@@ -62,7 +61,7 @@ class DatabaseManager:
                 config=self.__parameters.config,
             )
         except Exception:
-            LOGGER.exception("An error occurred while establishing the database connection")
+            self.__logger.exception("An error occurred while establishing the database connection")
             raise
 
     @property
@@ -75,7 +74,7 @@ class DatabaseManager:
         if self.__connection is None:
             error: str = "Database connection is not established"
 
-            LOGGER.error(error)
+            self.__logger.error(error)
             raise RuntimeError(error)
 
         return self.__connection
@@ -127,7 +126,7 @@ class DatabaseManager:
             sql: str = expression.sql(dialect="duckdb")
             error: str = "Unsupported SQL query type for statement `%s`" % sql
 
-            LOGGER.error(error)
+            self.__logger.error(error)
             raise ValueError(error)
 
     def __execute_expression(self, query: Query) -> Optional[DataFrame]:
@@ -146,14 +145,14 @@ class DatabaseManager:
         try:
             sql: str = query.sql
 
-            LOGGER.debug(f"Executing SQL\n{sql}")
+            self.__logger.debug("Executing SQL\n%s", sql)
 
             if query.query_type.has_data:
                 result: DataFrame = self.connection.execute(sql).fetchdf()
 
                 rows_returned: int = len(result)
 
-                LOGGER.info(f"Query returned {rows_returned} rows")
+                self.__logger.info("Query returned %s rows", rows_returned)
 
                 return result
             else:
@@ -164,11 +163,13 @@ class DatabaseManager:
                 ).fetchone()
                 rows_affected: int = affected[0] if affected else 0
 
-                LOGGER.info(f"Query affected {rows_affected} rows")
+                self.__logger.info("Query affected %s rows", rows_affected)
 
                 return
         except Exception:
-            LOGGER.exception("An error occurred while executing the SQL query on the database")
+            self.__logger.exception(
+                "An error occurred while executing the SQL query on the database"
+            )
             raise
 
     def execute(self, sql: str) -> List[Query]:
@@ -189,7 +190,7 @@ class DatabaseManager:
         if not isinstance(sql, str) or sql.strip() == "":
             error: str = "SQL query must be a valid non-empty string."
 
-            LOGGER.error(error)
+            self.__logger.error(error)
             raise ValueError(error)
 
         try:
@@ -198,7 +199,7 @@ class DatabaseManager:
             if len(expressions) == 0:
                 error: str = "Failed to parse SQL query: No valid SQL statements found."
 
-                LOGGER.error(error)
+                self.__logger.error(error)
                 raise ValueError(error)
 
             queries_statements: List[Query] = []
@@ -207,7 +208,7 @@ class DatabaseManager:
                 if expression is None:
                     error: str = "Failed to parse SQL query: Invalid SQL statement found."
 
-                    LOGGER.error(error)
+                    self.__logger.error(error)
                     raise ValueError(error)
 
                 query_type: QueryType = self.__get_query_type(expression)
@@ -219,7 +220,7 @@ class DatabaseManager:
 
             return queries_statements.copy()
         except Exception:
-            LOGGER.exception("Failed to parse SQL query `%s`", sql)
+            self.__logger.exception("Failed to parse SQL query `%s`", sql)
             raise
 
     def __insert_df(self, table_name: str, df: DataFrame) -> None:
@@ -235,13 +236,13 @@ class DatabaseManager:
         if not isinstance(table_name, str) or table_name.strip() == "":
             error: str = "Table name must be a valid non-empty string."
 
-            LOGGER.error(error)
+            self.__logger.error(error)
             raise ValueError(error)
 
         if not isinstance(df, DataFrame) or df.empty:
             error: str = "DataFrame must be a valid non-empty pandas DataFrame."
 
-            LOGGER.error(error)
+            self.__logger.error(error)
             raise ValueError(error)
 
         try:
@@ -249,9 +250,9 @@ class DatabaseManager:
 
             self.connection.append(table_name=table_name, df=df, by_name=True)
 
-            LOGGER.info(f"Inserted {rows_inserted} rows into table `{table_name}`")
+            self.__logger.info("Inserted %s rows into table `%s`", rows_inserted, table_name)
         except Exception:
-            LOGGER.exception("An error occurred while inserting data into the database")
+            self.__logger.exception("An error occurred while inserting data into the database")
             raise
 
     def __insert_data(self, table_name: str, data: List[Dict[str, Any]]) -> None:
@@ -269,7 +270,7 @@ class DatabaseManager:
         if not isinstance(data, list) or len(data) == 0:
             error: str = "Data must be a valid non-empty list of dictionaries."
 
-            LOGGER.error(error)
+            self.__logger.error(error)
             raise ValueError(error)
 
         if not all(isinstance(row, dict) for row in data):
@@ -278,14 +279,14 @@ class DatabaseManager:
                 " row of data."
             )
 
-            LOGGER.error(error)
+            self.__logger.error(error)
             raise ValueError(error)
 
         try:
             df: DataFrame = DataFrame(data)
             self.__insert_df(table_name=table_name, df=df)
         except Exception:
-            LOGGER.exception("An error occurred while inserting data into the database")
+            self.__logger.exception("An error occurred while inserting data into the database")
             raise
 
     def __insert_row(self, table_name: str, row: Dict[str, Any]) -> None:
@@ -304,13 +305,13 @@ class DatabaseManager:
         if not isinstance(row, dict) or len(row) == 0:
             error: str = "Row must be a valid non-empty dictionary."
 
-            LOGGER.error(error)
+            self.__logger.error(error)
             raise ValueError(error)
 
         try:
             self.__insert_data(table_name=table_name, data=[row])
         except Exception:
-            LOGGER.exception("An error occurred while inserting data into the database")
+            self.__logger.exception("An error occurred while inserting data into the database")
             raise
 
     @overload
@@ -354,5 +355,5 @@ class DatabaseManager:
                 "dictionary representing a row of data."
             )
 
-            LOGGER.error(error)
+            self.__logger.error(error)
             raise ValueError(error)

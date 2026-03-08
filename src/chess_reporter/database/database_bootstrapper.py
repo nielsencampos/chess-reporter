@@ -4,12 +4,11 @@ Database bootstrapper for the Chess Reporter application.
 
 from __future__ import annotations
 
-from logging import Logger, getLogger
 from pathlib import Path
 
-from chess_reporter.database.database_manager import DatabaseManager
+from loguru import Logger, logger
 
-LOGGER: Logger = getLogger(__name__)
+from chess_reporter.database.database_manager import DatabaseManager
 
 
 class DatabaseBootstrapper:
@@ -28,6 +27,7 @@ class DatabaseBootstrapper:
 
         self.__schemas_file_path: Path = sqls_dir / "schemas.sql"
         self.__tables_file_path: Path = sqls_dir / "tables.sql"
+        self.__logger: Logger = logger.bind(name="chess-reporter")
 
         self.__validate_sql_files()
 
@@ -38,13 +38,13 @@ class DatabaseBootstrapper:
         if not self.__schemas_file_path.exists():
             error: str = "Schemas SQL file not found at path: {}".format(self.__schemas_file_path)
 
-            LOGGER.exception(error)
+            self.__logger.exception(error)
             raise FileNotFoundError(error)
 
         if not self.__tables_file_path.exists():
             error: str = "Tables SQL file not found at path: {}".format(self.__tables_file_path)
 
-            LOGGER.exception(error)
+            self.__logger.exception(error)
             raise FileNotFoundError(error)
 
     def bootstrap(self) -> None:

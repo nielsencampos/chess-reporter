@@ -25,6 +25,9 @@ dist/
 .vscode/
 .idea/
 
+# Logs
+logs/
+
 # OS files
 .DS_Store
 Thumbs.db
