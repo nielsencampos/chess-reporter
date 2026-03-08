@@ -34,12 +34,14 @@ class StorageManager:
         self.__parameters: StorageParameters = StorageParameters()
         self.__logger = logger.bind(name="chess-reporter")
 
-    def __get_folder_path(self, folder_name: str) -> Path:
+    def __get_folder_path(self, folder_name: str, subfolder_name: str) -> Path:
         """
-        Checks if the provided folder name is valid according to the storage parameters.
+        Checks if the provided folder name and subfolder name are valid according to the storage
+            parameters.
 
         Args:
             folder_name (str): The name of the folder to check.
+            subfolder_name (str): The name of the subfolder to check.
         """
         if folder_name not in self.__parameters.folders:
             error: str = "Invalid folder name: {}. Valid folders are: {}.".format(
@@ -49,7 +51,15 @@ class StorageManager:
             self.__logger.exception(error)
             raise ValueError(error)
 
-        folder_path: Path = self.__parameters.path / folder_name
+        if subfolder_name not in self.__parameters.subfolders:
+            error: str = "Invalid subfolder name: {}. Valid subfolders are: {}.".format(
+                subfolder_name, self.__parameters.subfolders
+            )
+
+            self.__logger.exception(error)
+            raise ValueError(error)
+
+        folder_path: Path = self.__parameters.path / folder_name / subfolder_name
 
         return folder_path
 
@@ -70,19 +80,20 @@ class StorageManager:
             self.__logger.exception(error)
             raise ValueError(error)
 
-    def __get_file_path(self, folder_name: str, file_name: str) -> Path:
+    def __get_file_path(self, folder_name: str, subfolder_name: str, file_name: str) -> Path:
         """
-        Constructs the file path for the given folder name and file name, and checks if the file
-        has a valid extension.
+        Constructs the file path for the given folder name, subfolder name, and file name, and
+        checks if the file has a valid extension.
 
         Args:
             folder_name (str): The name of the folder containing the file.
+            subfolder_name (str): The name of the subfolder containing the file.
             file_name (str): The name of the file.
 
         Returns:
             Path: The constructed file path.
         """
-        folder_path: Path = self.__get_folder_path(folder_name)
+        folder_path: Path = self.__get_folder_path(folder_name, subfolder_name)
         file_path: Path = folder_path / file_name
         file_extension: str = file_path.suffix.replace(".", "").lower()
 
@@ -202,12 +213,15 @@ class StorageManager:
 
         file_path.write_bytes(content)
 
-    def list_files(self, folder_name: str, file_extension: Optional[str] = None) -> List[Path]:
+    def list_files(
+        self, folder_name: str, subfolder_name: str, file_extension: Optional[str] = None
+    ) -> List[Path]:
         """
         Lists the files in the specified folder, optionally filtering by file extension.
 
         Args:
             folder_name (str): The name of the folder to list files from.
+            subfolder_name (str): The name of the subfolder to list files from.
             file_extension (Optional[str]): The file extension to filter by (e.g., "txt").
                 If None, all files will be listed regardless of extension.
 
@@ -215,7 +229,7 @@ class StorageManager:
             List[Path]: A list of Path objects representing the files in the specified folder
                 that match the optional file extension filter.
         """
-        folder_path: Path = self.__get_folder_path(folder_name)
+        folder_path: Path = self.__get_folder_path(folder_name, subfolder_name)
 
         if file_extension is not None:
             self.__check_file_extension(file_extension)
@@ -228,8 +242,6 @@ class StorageManager:
 
             self.__logger.exception(error)
             raise ValueError(error)
-
-        folder_path: Path = self.__parameters.path / folder_name
 
         files: List[Path] = [file for file in folder_path.iterdir() if file.is_file()]
 
@@ -246,43 +258,46 @@ class StorageManager:
 
         return files.copy()
 
-    def file_exists(self, folder_name: str, file_name: str) -> bool:
+    def file_exists(self, folder_name: str, subfolder_name: str, file_name: str) -> bool:
         """
-        Checks if a file with the specified name exists in the given folder.
+        Checks if a file with the specified name exists in the given folder and subfolder.
 
         Args:
             folder_name (str): The name of the folder to check for the file.
+            subfolder_name (str): The name of the subfolder to check for the file.
             file_name (str): The name of the file to check for.
 
         Returns:
-            bool: True if the file exists in the specified folder, False otherwise.
+            bool: True if the file exists in the specified folder and subfolder, False otherwise.
         """
-        file_path: Path = self.__get_file_path(folder_name, file_name)
+        file_path: Path = self.__get_file_path(folder_name, subfolder_name, file_name)
 
         return file_path.is_file()
 
-    def file_path(self, folder_name: str, file_name: str) -> Path:
+    def file_path(self, folder_name: str, subfolder_name: str, file_name: str) -> Path:
         """
-        Returns the full path of the specified file in the given folder.
+        Returns the full path of the specified file in the given folder and subfolder.
 
         Args:
             folder_name (str): The name of the folder containing the file.
+            subfolder_name (str): The name of the subfolder containing the file.
             file_name (str): The name of the file.
 
         Returns:
             Path: The full path of the specified file.
         """
-        return self.__get_file_path(folder_name, file_name)
+        return self.__get_file_path(folder_name, subfolder_name, file_name)
 
-    def delete_file(self, folder_name: str, file_name: str) -> None:
+    def delete_file(self, folder_name: str, subfolder_name: str, file_name: str) -> None:
         """
-        Deletes the specified file from the given folder.
+        Deletes the specified file from the given folder and subfolder.
 
         Args:
             folder_name (str): The name of the folder containing the file to delete.
+            subfolder_name (str): The name of the subfolder containing the file to delete.
             file_name (str): The name of the file to delete.
         """
-        file_path: Path = self.__get_file_path(folder_name, file_name)
+        file_path: Path = self.__get_file_path(folder_name, subfolder_name, file_name)
 
         if not file_path.is_file():
             error: str = "File not found at path: {}.".format(file_path)
@@ -292,8 +307,8 @@ class StorageManager:
 
         file_path.unlink()
 
-    def read_file(self, folder_name: str, file_name: str) -> Union[str, bytes]:
-        file_path: Path = self.__get_file_path(folder_name, file_name)
+    def read_file(self, folder_name: str, subfolder_name: str, file_name: str) -> Union[str, bytes]:
+        file_path: Path = self.__get_file_path(folder_name, subfolder_name, file_name)
         file_extension: str = file_path.suffix.replace(".", "").lower()
 
         if file_extension in self.__parameters.string_extensions:
@@ -308,17 +323,20 @@ class StorageManager:
             self.__logger.exception(error)
             raise ValueError(error)
 
-    def save_file(self, content: Union[str, bytes], folder_name: str, file_name: str) -> None:
+    def save_file(
+        self, content: Union[str, bytes], folder_name: str, subfolder_name: str, file_name: str
+    ) -> None:
         """
-        Saves the given content to a file in the specified folder.
+        Saves the given content to a file in the specified folder and subfolder.
 
         Args:
             content (Union[str, bytes]): The content to save. Must be a string for text files and
                 bytes for binary files.
             folder_name (str): The name of the folder to save the file in.
+            subfolder_name (str): The name of the subfolder to save the file in.
             file_name (str): The name of the file to save.
         """
-        file_path: Path = self.__get_file_path(folder_name, file_name)
+        file_path: Path = self.__get_file_path(folder_name, subfolder_name, file_name)
         file_extension: str = file_path.suffix.replace(".", "").lower()
 
         if file_extension in self.__parameters.string_extensions:

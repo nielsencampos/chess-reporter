@@ -131,23 +131,23 @@ class DatabaseManager:
 
     def __execute_expression(self, query: Query) -> Optional[DataFrame]:
         """
-        Executes a SQL query represented by a Query object
-            and returns the result as a pandas DataFrame if applicable.
+        Executes a SQL query represented by a Query object and returns the result
+        as a pandas DataFrame if applicable.
 
         Args:
-            query (Query): The Query object containing the SQL expression to be executed.
+            query (Query): The Query object containing the SQL expression to be
+                executed.
 
         Returns:
-            Optional[DataFrame]:
-                A pandas DataFrame containing the results of the query if it is a DQL query,
-                    or None for other query types.
+            Optional[DataFrame]: A pandas DataFrame containing the results of the
+                query if it is a DQL query, or None for other query types.
         """
         try:
             sql: str = query.sql
 
             self.__logger.debug("Executing SQL\n{}", sql)
 
-            if query.query_type.has_data:
+            if query.query_type == QueryType.DQL:
                 result: DataFrame = self.connection.execute(sql).fetchdf()
 
                 rows_returned: int = len(result)
@@ -158,9 +158,12 @@ class DatabaseManager:
             else:
                 self.connection.execute(sql)
 
-                rows_affected: int = abs(self.connection.rowcount) or 0
+                if query.query_type == QueryType.DML:
+                    rows_affected: int = abs(self.connection.rowcount) or 0
 
-                self.__logger.info("Query affected {} rows", rows_affected)
+                    self.__logger.info("Query affected {} rows", rows_affected)
+                else:
+                    self.__logger.info("Query executed successfully")
 
                 return
         except Exception:
@@ -172,10 +175,10 @@ class DatabaseManager:
     def execute(self, sql: str) -> List[Query]:
         """
         Executes a raw SQL query on the database and returns a list of Query objects representing
-            the executed queries, including their types, expressions, and result data if applicable.
+        the executed queries, including their types, expressions, and result data if applicable.
 
         The method parses the input SQL string, determines the type of each query, executes them on
-            the database, and collects the results in a structured format for further processing.
+        the database, and collects the results in a structured format for further processing.
 
         Args:
             sql (str): A valid SQL query string to be executed on the database.
@@ -189,6 +192,8 @@ class DatabaseManager:
 
             self.__logger.error(error)
             raise ValueError(error)
+
+        self.connection.execute("BEGIN")
 
         try:
             expressions: List[Optional[Expression]] = parse(sql=sql, dialect="duckdb")
@@ -215,10 +220,16 @@ class DatabaseManager:
 
                 queries_statements.append(query)
 
+            self.connection.execute("COMMIT")
+
             return queries_statements.copy()
         except Exception:
+            self.connection.execute("ROLLBACK")
+
             self.__logger.exception("Failed to parse SQL query `{}`", sql)
             raise
+        finally:
+            self.connection.execute("COMMIT")
 
     def __insert_df(self, table_name: str, df: DataFrame) -> None:
         """
@@ -261,8 +272,8 @@ class DatabaseManager:
                 The name of the target table in the database where the data should be inserted.
             data (List[Dict[str, Any]]):
                 A list of dictionaries, where each dictionary represents a row of data to be
-                    inserted into the database, with keys corresponding to column names and values
-                    corresponding to the data for those columns.
+                inserted into the database, with keys corresponding to column names and values
+                corresponding to the data for those columns.
         """
         if not isinstance(data, list) or len(data) == 0:
             error: str = "Data must be a valid non-empty list of dictionaries."
@@ -323,12 +334,12 @@ class DatabaseManager:
     def insert(self, table_name: str, data: Any) -> None:
         """
         Inserts data into a specified table in the DuckDB database, accepting various formats of
-            input data.
+        input data.
 
         This method is designed to handle different types of input data for insertion, including
-            pandas DataFrames, lists of dictionaries, and single dictionaries representing rows of
-            data. It validates the input data format and delegates the insertion process to the
-            appropriate helper methods based on the type of the input data.
+        pandas DataFrames, lists of dictionaries, and single dictionaries representing rows of
+        data. It validates the input data format and delegates the insertion process to the
+        appropriate helper methods based on the type of the input data.
 
         Args:
             table_name (str):

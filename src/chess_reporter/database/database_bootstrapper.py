@@ -27,6 +27,7 @@ class DatabaseBootstrapper:
 
         self.__schemas_file_path: Path = sqls_dir / "schemas.sql"
         self.__tables_file_path: Path = sqls_dir / "tables.sql"
+        self.___tests_file_path: Path = sqls_dir / "tests.sql"
         self.__logger = logger.bind(name="chess-reporter")
 
         self.__validate_sql_files()
@@ -47,17 +48,25 @@ class DatabaseBootstrapper:
             self.__logger.exception(error)
             raise FileNotFoundError(error)
 
+        if not self.___tests_file_path.exists():
+            error: str = "Tests SQL file not found at path: {}".format(self.___tests_file_path)
+
+            self.__logger.exception(error)
+            raise FileNotFoundError(error)
+
     def bootstrap(self) -> None:
         """
         Bootstraps the database by executing the SQL files for schemas and tables.
         """
         schemas_sqls: str = self.__schemas_file_path.read_text(encoding="utf-8")
         tables_sqls: str = self.__tables_file_path.read_text(encoding="utf-8")
+        tests_sqls: str = self.___tests_file_path.read_text(encoding="utf-8")
 
         database_manager: DatabaseManager = DatabaseManager()
 
         try:
             database_manager.execute(schemas_sqls)
             database_manager.execute(tables_sqls)
+            database_manager.execute(tests_sqls)
         finally:
             database_manager.close()

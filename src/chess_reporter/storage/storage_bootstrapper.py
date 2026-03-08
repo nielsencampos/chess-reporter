@@ -28,13 +28,19 @@ class StorageBootstrapper:
 
     def bootstrap(self) -> None:
         """
-        Bootstraps the storage by creating the necessary folders as defined in the parameters.
+        Bootstraps the storage by creating the necessary folder structure based on
+        the provided storage parameters. It iterates through the specified folders
+        and subfolders, checks if they exist, and creates them if they do not exist,
+        while logging the actions taken.
         """
         for folder_name in self.__parameters.folders:
             folder_path: Path = self.__parameters.path / folder_name
 
-            if not folder_path.exists():
-                folder_path.mkdir(parents=True, exist_ok=True)
-                self.__logger.info("Created storage folder at path: {}", folder_path)
-            else:
-                self.__logger.info("Storage folder already exists at path: {}", folder_path)
+            for subfolder_name in self.__parameters.subfolders:
+                folder_path = folder_path / subfolder_name
+
+                if not folder_path.exists():
+                    folder_path.mkdir(parents=True, exist_ok=True)
+                    self.__logger.info("Created storage folder at path: {}", folder_path)
+                else:
+                    self.__logger.info("Storage folder already exists at path: {}", folder_path)

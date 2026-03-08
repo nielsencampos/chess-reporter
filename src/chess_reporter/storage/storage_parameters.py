@@ -23,6 +23,10 @@ class StorageParameters(BaseModel):
         default={"input", "output"},
         description="Set of folder names to be created within the storage directory",
     )
+    subfolders: Set[str] = Field(
+        default={"openings", "games", "others"},
+        description="Set of subfolder names to be created within each folder",
+    )
     binary_extensions: Set[str] = Field(
         default={"pgn", "xlsx"},
         description="Set of file extensions to be treated as binary files",

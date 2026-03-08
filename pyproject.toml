@@ -40,3 +40,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/chess_reporter"]
+
+[tool.uv.scripts]
+clean = "python scripts/clean.py"

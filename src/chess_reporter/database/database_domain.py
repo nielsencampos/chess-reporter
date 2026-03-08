@@ -28,13 +28,6 @@ class QueryType(StrEnum):
     DDL = "ddl"
     DCL = "dcl"
 
-    @property
-    def has_data(self) -> bool:
-        """
-        Indicates whether the query type is a Data Query Language (DQL) query.
-        """
-        return self == QueryType.DQL
-
 
 class Query(BaseModel):
     """

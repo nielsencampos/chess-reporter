@@ -5,4 +5,5 @@
 -- workspace      : User sandbox for generated outputs and analysis
 -- =================================================================================================
 CREATE SCHEMA IF NOT EXISTS chess_reporter;
+CREATE SCHEMA IF NOT EXISTS test;
 CREATE SCHEMA IF NOT EXISTS workspace;
