@@ -38,7 +38,6 @@ COPY src/ src/
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH="/app/src"
-ENV STOCKFISH_PATH="/usr/local/bin/stockfish"
 
 COPY notebooks/ notebooks/
 

@@ -42,9 +42,6 @@ spec:
       containers:
         - name: chess-reporter
           image: ghcr.io/nielsencampos/chess-reporter:latest
-          env:
-            - name: STOCKFISH_PATH
-              value: "/usr/local/bin/stockfish"
           volumeMounts:
             - name: data
               mountPath: /app/data
