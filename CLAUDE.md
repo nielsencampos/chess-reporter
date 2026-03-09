@@ -59,5 +59,23 @@ The application is a chess game analysis pipeline using Stockfish + DuckDB, expo
 ### Infrastructure
 
 - **Docker**: `docker/chess-reporter.Dockerfile` — multi-stage build (Stockfish from source + uv Python). Runtime CMD is `jupyter lab` on port 8888.
-- **Kubernetes**: `k8s/chess-reporter.yaml` — two PVCs (`chess-reporter-data` 8Gi at `/app/data`, `chess-reporter-notebooks` 8Gi at `/app/notebooks`).
+- **Kubernetes**: `k8s/chess-reporter.yaml` — Service (NodePort 30888) + Deployment with hostPath volumes. JupyterLab accessible at `http://localhost:30888`.
 - **Notebooks**: live in `notebooks/`, served by JupyterLab in the container.
+
+### Deploying locally (Windows)
+
+Docker Desktop exposes Windows drives inside the k8s node at `/run/desktop/mnt/host/{drive}/...`. Always use PowerShell to apply the k8s manifest — **never** `envsubst` on Windows (it passes `D:/...` paths that Docker misparsed as bind mount mode):
+
+```powershell
+# Recreate secret after namespace delete
+kubectl create secret docker-registry ghcr-secret `
+  --namespace chess-reporter `
+  --docker-server=ghcr.io `
+  --docker-username=nielsencampos `
+  --docker-password=<GITHUB_PAT>
+
+# Apply manifest
+(Get-Content .\k8s\chess-reporter.yaml -Raw) `
+  -replace '\$\{LOCAL_PATH\}', '/run/desktop/mnt/host/d/projects/chess-reporter' `
+  | kubectl apply -f -
+```

@@ -1,3 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: chess-reporter
+  namespace: chess-reporter
+spec:
+  type: NodePort
+  selector:
+    app: chess-reporter
+  ports:
+    - port: 8888
+      targetPort: 8888
+      nodePort: 30888
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
