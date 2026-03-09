@@ -5,10 +5,11 @@ Chess engine instance for the Chess Reporter application.
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from chess import Board
 from chess.engine import INFO_SCORE, InfoDict, Limit, PovScore, Score, SimpleEngine
+from loguru import logger
 
 from chess_reporter.chess_domain.chess_domain import ScoreType
 from chess_reporter.chess_engine.chess_engine_domain import (
@@ -16,6 +17,9 @@ from chess_reporter.chess_engine.chess_engine_domain import (
     EnginePositionAnalysisResult,
 )
 from chess_reporter.chess_engine.chess_engine_parameters import ChessEngineParameters
+
+if TYPE_CHECKING:
+    from loguru import Logger
 
 
 class ChessEngineInstance:
@@ -32,6 +36,7 @@ class ChessEngineInstance:
         """
         Initializes the ChessEngineInstance.
         """
+        self.__logger: Logger = logger.bind(name="chess-reporter")
         self.__parameters: ChessEngineParameters = ChessEngineParameters()
         self.__simple_engine: SimpleEngine = SimpleEngine.popen_uci(self.__parameters.path)
         self.__simple_engine.configure(
@@ -60,12 +65,6 @@ class ChessEngineInstance:
             EnginePositionAnalysisResult: The chess engine analysis result for the given
                 position and analysis index.
         """
-        if not isinstance(position_analysis_index, int) or position_analysis_index < 1:
-            raise ValueError("position_analysis_index must be a positive integer.")
-
-        if not isinstance(board, Board):
-            raise TypeError(f"Expected board to be an instance of chess.Board, got {type(board)}")
-
         started_analysis_at: datetime = datetime.now(timezone.utc)
         pre_engine_position_analysis_result: InfoDict = self.__simple_engine.analyse(
             board=board.copy(stack=False), limit=self.limit, info=INFO_SCORE
@@ -73,7 +72,11 @@ class ChessEngineInstance:
         pre_pov_score: Optional[PovScore] = pre_engine_position_analysis_result.get("score")
 
         if not isinstance(pre_pov_score, PovScore):
-            raise ValueError("Engine analysis did not return a valid score.")
+            error: str = "Engine analysis did not return a valid score."
+
+            self.__logger.error(error)
+
+            raise ValueError(error)
 
         pov_score: PovScore = pre_pov_score
         score: Score = pov_score.white()
@@ -81,7 +84,11 @@ class ChessEngineInstance:
         pre_score_value: Optional[int] = score.mate() if pov_score.is_mate() else score.score()
 
         if not isinstance(pre_score_value, int):
-            raise ValueError("Engine analysis did not return a valid score value.")
+            error: str = "Engine analysis did not return a valid score value."
+
+            self.__logger.error(error)
+
+            raise ValueError(error)
 
         score_value: int = pre_score_value
         depth: int = pre_engine_position_analysis_result.get("depth", self.__parameters.depth)

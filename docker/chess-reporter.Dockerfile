@@ -40,4 +40,8 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH="/app/src"
 ENV STOCKFISH_PATH="/usr/local/bin/stockfish"
 
-CMD ["python", "-m", "chess_reporter"]
+COPY notebooks/ notebooks/
+
+EXPOSE 8888
+
+CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root", "--notebook-dir=/app/notebooks"]

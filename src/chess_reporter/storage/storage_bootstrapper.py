@@ -27,8 +27,8 @@ class StorageBootstrapper:
         """
         Initializes the StorageBootstrapper.
         """
-        self.__parameters: StorageParameters = StorageParameters()
         self.__logger: Logger = logger.bind(name="chess-reporter")
+        self.__parameters: StorageParameters = StorageParameters()
 
     def bootstrap(self) -> None:
         """

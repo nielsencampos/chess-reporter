@@ -37,9 +37,9 @@ class DatabaseManager:
         """
         Initializes the DatabaseManager.
         """
+        self.__logger: Logger = logger.bind(name="chess-reporter")
         self.__parameters: DatabaseParameters = DatabaseParameters()
         self.__connection: Optional[DuckDBPyConnection] = None
-        self.__logger: Logger = logger.bind(name="chess-reporter")
 
     def __connect(self) -> None:
         """

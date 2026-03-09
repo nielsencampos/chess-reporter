@@ -7,6 +7,7 @@ requires-python = ">=3.13"
 
 dependencies = [
     "duckdb>=1.4.4",
+    "jupyterlab>=4.5.5",
     "loguru>=0.7.3",
     "pandas>=3.0.1",
     "pydantic>=2.12.5",

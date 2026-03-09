@@ -4,9 +4,7 @@ Chess engine configuration parameters for the Chess Reporter application.
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field, computed_field, field_validator
-
-from chess_reporter.utils.utils import get_chess_engine_path
+from pydantic import BaseModel, Field, field_validator
 
 
 class ChessEngineParameters(BaseModel):
@@ -14,6 +12,11 @@ class ChessEngineParameters(BaseModel):
     Chess engine configuration parameters for the Chess Reporter application.
     """
 
+    path: str = Field(
+        description="The path to the chess engine executable",
+        default="/usr/local/bin/stockfish",
+        frozen=True,
+    )
     threads: int = Field(
         description="'Number of threads configured",
         default=1,
@@ -43,14 +46,6 @@ class ChessEngineParameters(BaseModel):
         default="chess_reporter.chess_engine",
         frozen=True,
     )
-
-    @computed_field
-    @property
-    def path(self) -> str:
-        """
-        Current path of the chess engine
-        """
-        return get_chess_engine_path()
 
     @field_validator("evaluation_runs")
     @classmethod

@@ -7,9 +7,10 @@ from __future__ import annotations
 from asyncio import AbstractEventLoop, gather, get_event_loop, run
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
-from typing import List
+from typing import TYPE_CHECKING, List
 
 from chess import Board
+from loguru import logger
 
 from chess_reporter.chess_domain.chess_domain import ResultType, ScoreType
 from chess_reporter.chess_engine.chess_engine_domain import (
@@ -20,6 +21,9 @@ from chess_reporter.chess_engine.chess_engine_instance import ChessEngineInstanc
 from chess_reporter.chess_engine.chess_engine_parameters import ChessEngineParameters
 from chess_reporter.database.database_domain import Query
 from chess_reporter.database.database_manager import DatabaseManager
+
+if TYPE_CHECKING:
+    from loguru import Logger
 
 
 class ChessEngineManager:
@@ -36,6 +40,7 @@ class ChessEngineManager:
         """
         Initializes the ChessEngineManager.
         """
+        self.__logger: Logger = logger.bind(name="chess-reporter")
         self.parameters: ChessEngineParameters = ChessEngineParameters()
         self.__instances: List[ChessEngineInstance] = [
             ChessEngineInstance() for _ in range(self.parameters.evaluation_runs)
@@ -55,19 +60,20 @@ class ChessEngineManager:
         database_manager: DatabaseManager = DatabaseManager()
 
         try:
-            quantity_sql: str = f"SELECT (COUNT(1)) AS quantity FROM {self.parameters.table_name}"
+            quantity_sql: str = (
+                f"SELECT (COUNT(1)) AS quantity FROM {self.parameters.table_name} "
+                f"WHERE chess_engine_id = '{self.data.chess_engine_id}'"
+            )
             quantity_query: Query = database_manager.execute(quantity_sql)[0]
-            quantity: int = 0
-
-            if isinstance(quantity_query.raw_data, list) and len(quantity_query.raw_data):
-                quantity = quantity_query.raw_data[0].get("quantity", 0)
+            quantity: int = quantity_query.raw_data[0].get("quantity", 0)  # type: ignore
 
             if quantity == 0:
                 database_manager.insert(self.parameters.table_name, self.data.model_dump())
         except Exception as error:
-            raise RuntimeError(
+            self.__logger.exception(
                 f"Failed to maintain chess engine configuration data in the database: {error}"
             )
+            raise
         finally:
             database_manager.close()
 
@@ -113,12 +119,6 @@ class ChessEngineManager:
             List[EnginePositionAnalysisResult]: A list of chess engine analysis
                 results for the given position.
         """
-        if not isinstance(board, Board):
-            raise TypeError(f"Expected board to be an instance of chess.Board, got {type(board)}")
-
-        if not isinstance(result, ResultType):
-            raise TypeError(f"Expected result to be an instance of ResultType, got {type(result)}")
-
         engine_position_analysis_results: List[EnginePositionAnalysisResult] = []
 
         if result is not ResultType.ONGOING:

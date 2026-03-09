@@ -34,8 +34,8 @@ class StorageManager:
         """
         Initializes the StorageManager.
         """
-        self.__parameters: StorageParameters = StorageParameters()
         self.__logger: Logger = logger.bind(name="chess-reporter")
+        self.__parameters: StorageParameters = StorageParameters()
 
     def __get_folder_path(self, folder_name: str, subfolder_name: str) -> Path:
         """
@@ -51,7 +51,8 @@ class StorageManager:
                 folder_name, self.__parameters.folders
             )
 
-            self.__logger.exception(error)
+            self.__logger.error(error)
+
             raise ValueError(error)
 
         if subfolder_name not in self.__parameters.subfolders:
@@ -59,7 +60,8 @@ class StorageManager:
                 subfolder_name, self.__parameters.subfolders
             )
 
-            self.__logger.exception(error)
+            self.__logger.error(error)
+
             raise ValueError(error)
 
         folder_path: Path = self.__parameters.path / folder_name / subfolder_name
@@ -80,7 +82,8 @@ class StorageManager:
                 self.__parameters.all_extensions,
             )
 
-            self.__logger.exception(error)
+            self.__logger.error(error)
+
             raise ValueError(error)
 
     def __get_file_path(self, folder_name: str, subfolder_name: str, file_name: str) -> Path:
@@ -117,7 +120,8 @@ class StorageManager:
         if not file_path.is_file():
             error: str = "File not found at path: {}.".format(file_path)
 
-            self.__logger.exception(error)
+            self.__logger.error(error)
+
             raise FileNotFoundError(error)
 
         file_extension: str = file_path.suffix.replace(".", "").lower()
@@ -131,7 +135,8 @@ class StorageManager:
                 self.__parameters.string_extensions,
             )
 
-            self.__logger.exception(error)
+            self.__logger.error(error)
+
             raise ValueError(error)
 
         return file_path.read_text(encoding="utf-8")
@@ -149,7 +154,8 @@ class StorageManager:
         if not file_path.is_file():
             error: str = "File not found at path: {}.".format(file_path)
 
-            self.__logger.exception(error)
+            self.__logger.error(error)
+
             raise FileNotFoundError(error)
 
         file_extension: str = file_path.suffix.replace(".", "").lower()
@@ -164,6 +170,7 @@ class StorageManager:
             )
 
             self.__logger.exception(error)
+
             raise ValueError(error)
 
         return file_path.read_bytes()
@@ -187,7 +194,8 @@ class StorageManager:
                 self.__parameters.string_extensions,
             )
 
-            self.__logger.exception(error)
+            self.__logger.error(error)
+
             raise ValueError(error)
 
         file_path.write_text(content, encoding="utf-8")
@@ -211,7 +219,8 @@ class StorageManager:
                 self.__parameters.binary_extensions,
             )
 
-            self.__logger.exception(error)
+            self.__logger.error(error)
+
             raise ValueError(error)
 
         file_path.write_bytes(content)
@@ -243,7 +252,8 @@ class StorageManager:
                 self.__parameters.all_extensions,
             )
 
-            self.__logger.exception(error)
+            self.__logger.error(error)
+
             raise ValueError(error)
 
         files: List[Path] = [file for file in folder_path.iterdir() if file.is_file()]
@@ -305,7 +315,8 @@ class StorageManager:
         if not file_path.is_file():
             error: str = "File not found at path: {}.".format(file_path)
 
-            self.__logger.exception(error)
+            self.__logger.error(error)
+
             raise FileNotFoundError(error)
 
         file_path.unlink()
@@ -323,7 +334,8 @@ class StorageManager:
                 file_path, file_extension
             )
 
-            self.__logger.exception(error)
+            self.__logger.error(error)
+
             raise ValueError(error)
 
     def save_file(
@@ -348,7 +360,8 @@ class StorageManager:
                     file_extension
                 )
 
-                self.__logger.exception(error)
+                self.__logger.error(error)
+
                 raise ValueError(error)
 
             self.__save_file_as_string(content, file_path)
@@ -356,7 +369,8 @@ class StorageManager:
             if not isinstance(content, bytes):
                 error: str = "Content must be bytes for file extension: {}.".format(file_extension)
 
-                self.__logger.exception(error)
+                self.__logger.error(error)
+
                 raise ValueError(error)
 
             self.__save_file_as_binary(content, file_path)
@@ -365,5 +379,6 @@ class StorageManager:
                 file_path, file_extension
             )
 
-            self.__logger.exception(error)
+            self.__logger.error(error)
+
             raise ValueError(error)

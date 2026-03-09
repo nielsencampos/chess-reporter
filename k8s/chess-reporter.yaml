@@ -10,6 +10,18 @@ spec:
     requests:
       storage: 8Gi
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: chess-reporter-notebooks
+  namespace: chess-reporter
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 8Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -36,6 +48,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /app/data
+            - name: notebooks
+              mountPath: /app/notebooks
           resources:
             requests:
               memory: "1Gi"
@@ -47,3 +61,6 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: chess-reporter-data
+        - name: notebooks
+          persistentVolumeClaim:
+            claimName: chess-reporter-notebooks
