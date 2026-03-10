@@ -4,6 +4,7 @@ Database manager for the Chess Reporter application.
 
 from __future__ import annotations
 
+from types import TracebackType
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, overload
 
 from duckdb import DuckDBPyConnection, connect
@@ -40,6 +41,33 @@ class DatabaseManager:
         self.__logger: Logger = logger.bind(name="chess-reporter")
         self.__parameters: DatabaseParameters = DatabaseParameters()
         self.__connection: Optional[DuckDBPyConnection] = None
+
+    def __enter__(self) -> DatabaseManager:
+        """
+        Enables the use of the DatabaseManager as a context manager.
+        """
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> bool:
+        """
+        Ensures that the database connection is properly closed when exiting the context.
+
+        Args:
+            exc_type: The type of the exception, if any, that caused the
+                context to be exited.
+            exc_value: The exception instance, if any, that caused the
+                context to be exited.
+            traceback: The traceback object, if any, associated with the
+                exception that caused the context to be exited.
+        """
+        self.close()
+
+        return False
 
     def __connect(self) -> None:
         """

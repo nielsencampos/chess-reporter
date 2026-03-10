@@ -18,8 +18,8 @@ class ChessEngineParameters(BaseModel):
         frozen=True,
     )
     threads: int = Field(
-        description="'Number of threads configured",
-        default=1,
+        description="Number of threads configured",
+        default=4,
         ge=1,
         frozen=True,
     )

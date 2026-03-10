@@ -33,6 +33,8 @@ spec:
         - name: chess-reporter
           image: ghcr.io/nielsencampos/chess-reporter:latest
           volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
             - name: data
               mountPath: /app/data
             - name: notebooks
@@ -45,8 +47,12 @@ spec:
               cpu: "1000m"
             limits:
               memory: "16Gi"
-              cpu: "8000m"
+              cpu: "12000m"
       volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 8Gi
         - name: data
           hostPath:
             path: ${LOCAL_PATH}/data

@@ -5,7 +5,7 @@ Position domain definitions for the Chess Reporter application.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, List
 
 from chess import Board
 from pydantic import BaseModel, ConfigDict, Field, computed_field
@@ -31,10 +31,10 @@ class PositionAnalysisContext(BaseModel):
     )
     fen: str = Field(description="FEN string representing the chess position")
     turn: TurnType = Field(description="Player to move: `white` or `black`")
-    termination: Optional[TerminationType] = Field(
+    termination: TerminationType = Field(
         description="Termination status of the position evaluation"
     )
-    result: Optional[ResultType] = Field(description="Result of the position evaluation")
+    result: ResultType = Field(description="Result of the position evaluation")
     board: Board = Field(
         description="Chess position represented as a Board instance from the python-chess library"
     )
@@ -58,15 +58,64 @@ class PositionAnalysisContext(BaseModel):
         return value
 
 
-class PositionMedianScoreResult(BaseModel):
+class AggregatedPositionResults(BaseModel):
     """
-    Data class for storing the median score result of a chess position analysis.
+    Data class for storing the aggregated chess position analysis results.
     """
 
-    score_type: ScoreType = Field(
-        description="Type of the score: `cp` for centipawns or `mate` for mate in N moves"
+    median_score_type: ScoreType = Field(
+        description=(
+            "Type of the median and final score: `cp` for centipawns or `mate` for mate in N moves"
+        ),
     )
-    score_value: int = Field(description="Value of the score: centipawns or mate in N moves")
+    median_score_value: int = Field(
+        description="Value of the median and final score: centipawns or mate in N moves"
+    )
+    minimum_score_type: ScoreType = Field(
+        description="Type of the minimum score: `cp` for centipawns or `mate` for mate in N moves"
+    )
+    minimum_score_value: int = Field(
+        description="Value of the minimum score: centipawns or mate in N moves"
+    )
+    maximum_score_type: ScoreType = Field(
+        description="Type of the maximum score: `cp` for centipawns or `mate` for mate in N moves"
+    )
+    maximum_score_value: int = Field(
+        description="Value of the maximum score: centipawns or mate in N moves"
+    )
+    median_depth: int = Field(
+        description="Median search depth across all evaluations for the position"
+    )
+    median_seldepth: int = Field(
+        description="Median selective search depth across all evaluations for the position"
+    )
+    median_time_in_seconds: float = Field(
+        description="Median time taken in seconds across all evaluations for the position"
+    )
+    minimum_depth: int = Field(
+        description="Minimum search depth across all evaluations for the position"
+    )
+    minimum_seldepth: int = Field(
+        description="Minimum selective search depth across all evaluations for the position"
+    )
+    minimum_time_in_seconds: float = Field(
+        description="Minimum time taken in seconds across all evaluations for the position"
+    )
+    maximum_depth: int = Field(
+        description="Maximum search depth across all evaluations for the position"
+    )
+    maximum_seldepth: int = Field(
+        description="Maximum selective search depth across all evaluations for the position"
+    )
+    maximum_time_in_seconds: float = Field(
+        description="Maximum time taken in seconds across all evaluations for the position"
+    )
+    started_analysis_at: datetime = Field(
+        description="Timestamp indicating when the chess engine analysis for this position started"
+    )
+    finished_analysis_at: datetime = Field(
+        description="Timestamp indicating when the chess engine analysis for this position finished"
+    )
 
 
 class PositionData(BaseModel):
@@ -80,14 +129,63 @@ class PositionData(BaseModel):
     )
     fen: str = Field(description="FEN string representing the chess position")
     turn: TurnType = Field(description="Player to move: `white` or `black`")
-    termination: Optional[TerminationType] = Field(
+    termination: TerminationType = Field(
         description="Termination status of the position evaluation"
     )
-    result: Optional[ResultType] = Field(description="Result of the position evaluation")
-    score_type: ScoreType = Field(
-        description="Type of the score: `cp` for centipawns or `mate` for mate in N moves"
+    result: ResultType = Field(description="Result of the position evaluation")
+    median_score_type: ScoreType = Field(
+        description=(
+            "Type of the median and final score: `cp` for centipawns or `mate` for mate in N moves"
+        ),
     )
-    score_value: int = Field(description="Value of the score: centipawns or mate in N moves")
+    median_score_value: int = Field(
+        description="Value of the median and final score: centipawns or mate in N moves"
+    )
+    minimum_score_type: ScoreType = Field(
+        description="Type of the minimum score: `cp` for centipawns or `mate` for mate in N moves"
+    )
+    minimum_score_value: int = Field(
+        description="Value of the minimum score: centipawns or mate in N moves"
+    )
+    maximum_score_type: ScoreType = Field(
+        description="Type of the maximum score: `cp` for centipawns or `mate` for mate in N moves"
+    )
+    maximum_score_value: int = Field(
+        description="Value of the maximum score: centipawns or mate in N moves"
+    )
+    median_depth: int = Field(
+        description="Median search depth across all evaluations for the position"
+    )
+    median_seldepth: int = Field(
+        description="Median selective search depth across all evaluations for the position"
+    )
+    median_time_in_seconds: float = Field(
+        description="Median time taken in seconds across all evaluations for the position"
+    )
+    minimum_depth: int = Field(
+        description="Minimum search depth across all evaluations for the position"
+    )
+    minimum_seldepth: int = Field(
+        description="Minimum selective search depth across all evaluations for the position"
+    )
+    minimum_time_in_seconds: float = Field(
+        description="Minimum time taken in seconds across all evaluations for the position"
+    )
+    maximum_depth: int = Field(
+        description="Maximum search depth across all evaluations for the position"
+    )
+    maximum_seldepth: int = Field(
+        description="Maximum selective search depth across all evaluations for the position"
+    )
+    maximum_time_in_seconds: float = Field(
+        description="Maximum time taken in seconds across all evaluations for the position"
+    )
+    started_analysis_at: datetime = Field(
+        description="Timestamp indicating when the chess engine analysis for this position started"
+    )
+    finished_analysis_at: datetime = Field(
+        description="Timestamp indicating when the chess engine analysis for this position finished"
+    )
 
 
 class PositionAnalysisData(BaseModel):

@@ -4,29 +4,23 @@ Position manager for the Chess Reporter application.
 
 from __future__ import annotations
 
+from datetime import datetime
 from statistics import median
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, List
 
-from chess import Board, Outcome, Termination
 from loguru import logger
 
-from chess_reporter.chess_domain.chess_domain import (
-    ResultType,
-    ScoreType,
-    TerminationType,
-    TurnType,
-)
+from chess_reporter.chess_domain.chess_domain import PositionSetup, ScoreType, TurnType
 from chess_reporter.chess_engine.chess_engine_domain import (
     EnginePositionAnalysisResult,
 )
 from chess_reporter.chess_engine.chess_engine_manager import ChessEngineManager
 from chess_reporter.database.database_domain import Query
-from chess_reporter.database.database_manager import DatabaseManager
 from chess_reporter.position.position_domain import (
+    AggregatedPositionResults,
     PositionAnalysisContext,
     PositionAnalysisData,
     PositionData,
-    PositionMedianScoreResult,
 )
 from chess_reporter.position.position_parameters import PositionParameters
 
@@ -44,13 +38,7 @@ class PositionManager:
         close: Closes the chess engine process and releases any associated resources.
     """
 
-    def __init__(
-        self,
-        chess_engine_manager: ChessEngineManager,
-        board: Board,
-        termination: Optional[TerminationType] = None,
-        result: Optional[ResultType] = None,
-    ) -> None:
+    def __init__(self, chess_engine_manager: ChessEngineManager, setup: PositionSetup) -> None:
         """
         Initializes the PositionManager.
         """
@@ -60,60 +48,14 @@ class PositionManager:
         self.parameters: PositionParameters = PositionParameters()
         self.context: PositionAnalysisContext = PositionAnalysisContext(
             chess_engine_id=self.chess_engine_manager.data.chess_engine_id,
-            fen=board.copy(stack=False).fen(),
-            turn=TurnType.WHITE if board.copy(stack=False).turn else TurnType.BLACK,
-            termination=termination,
-            result=result,
-            board=board.copy(stack=False),
+            fen=setup.fen,
+            turn=setup.turn,
+            termination=setup.termination,
+            result=setup.result,
+            board=setup.board.copy(stack=False),
         )
-
-        if self.context.termination is None or self.context.result is None:
-            self.__update_termination_and_result__()
 
         self.__maintain_data__()
-
-    def __update_termination_and_result__(self) -> None:
-        """
-        Updates the termination and result attributes in the PositionAnalysisContext
-        based on the current board state.
-        """
-        outcome: Optional[Outcome] = self.context.board.copy(stack=False).outcome(claim_draw=False)
-
-        if outcome is None:
-            self.context.termination = TerminationType.ONGOING
-            self.context.result = ResultType.ONGOING
-
-            return
-
-        termination: Termination = outcome.termination
-        winner: Optional[bool] = outcome.winner
-
-        termination_to_termination_type_mapping: Dict[Termination, TerminationType] = {
-            Termination.CHECKMATE: TerminationType.CHECKMATE,
-            Termination.STALEMATE: TerminationType.STALEMATE,
-            Termination.INSUFFICIENT_MATERIAL: TerminationType.INSUFFICIENT_MATERIAL,
-            Termination.SEVENTYFIVE_MOVES: TerminationType.SEVENTYFIVE_MOVES,
-            Termination.FIVEFOLD_REPETITION: TerminationType.FIVEFOLD_REPETITION,
-            Termination.FIFTY_MOVES: TerminationType.FIFTY_MOVES_RULE,
-            Termination.THREEFOLD_REPETITION: TerminationType.THREEFOLD_REPETITION,
-            Termination.VARIANT_WIN: TerminationType.VARIANT,
-            Termination.VARIANT_LOSS: TerminationType.VARIANT,
-            Termination.VARIANT_DRAW: TerminationType.VARIANT_DRAW,
-        }
-
-        winner_to_result_type_mapping: Dict[Optional[bool], ResultType] = {
-            None: ResultType.DRAW,
-            True: ResultType.WHITE_WON,
-            False: ResultType.BLACK_WON,
-        }
-
-        self.context.termination = termination_to_termination_type_mapping.get(
-            termination, TerminationType.ONGOING
-        )
-        result_if_finished = winner_to_result_type_mapping.get(winner, ResultType.ONGOING)
-        self.context.result = (
-            result_if_finished if self.context.termination.is_finished else ResultType.ONGOING
-        )
 
     def __get_engine_position_analysis_results__(self) -> List[EnginePositionAnalysisResult]:
         """
@@ -123,14 +65,6 @@ class PositionManager:
             List[EnginePositionAnalysisResult]: A list of engine analysis results for the
                 current position.
         """
-
-        if self.context.result is None:
-            error: str = "Result for the chess position is not determined in the context."
-
-            self.__logger.error(error)
-
-            raise ValueError(error)
-
         engine_position_analysis_results: List[EnginePositionAnalysisResult] = (
             self.chess_engine_manager.get_engine_position_analysis_results(
                 board=self.context.board.copy(stack=False), result=self.context.result
@@ -139,19 +73,26 @@ class PositionManager:
 
         return engine_position_analysis_results.copy()
 
-    def __get_position_median_score_result__(
+    def __aggregate_position_results__(
         self, engine_position_analysis_results: List[EnginePositionAnalysisResult]
-    ) -> PositionMedianScoreResult:
+    ) -> AggregatedPositionResults:
         """
-        Calculates the median score result from a list of engine position analysis results.
+        Calculates the aggregated results from a list of engine position analysis results.
 
         Args:
             engine_position_analysis_results (List[EnginePositionAnalysisResult]): A list of
                 engine analysis results for a chess position.
         Returns:
-            PositionMedianScoreResult: The median score result calculated from the
+            AggregatedPositionResults: The aggregated results calculated from the
                 engine analysis results.
         """
+        quantity_cp_scores: int = len(
+            [
+                result
+                for result in engine_position_analysis_results
+                if result.score_type == ScoreType.CP
+            ]
+        )
         quantity_mate_scores: int = len(
             [
                 result
@@ -159,26 +100,79 @@ class PositionManager:
                 if result.score_type == ScoreType.MATE
             ]
         )
-        score_type: ScoreType = ScoreType.MATE if quantity_mate_scores > 1 else ScoreType.CP
-        score_values: List[int] = [
+        median_score_type: ScoreType = ScoreType.MATE if quantity_mate_scores > 1 else ScoreType.CP
+        median_score_values: List[int] = [
             result.score_value
             for result in engine_position_analysis_results
-            if result.score_type == score_type
+            if result.score_type == median_score_type
         ]
-        score_value: int = int(round(median(score_values), 0))
+        median_score_value: int = int(round(median(median_score_values), 0))
+        minimum_score_type: ScoreType = ScoreType.CP if quantity_cp_scores > 0 else ScoreType.MATE
+        minimum_score_values: List[int] = [
+            result.score_value
+            for result in engine_position_analysis_results
+            if result.score_type == minimum_score_type
+        ]
+        is_white: bool = self.context.turn == TurnType.WHITE
+        minimum_score_value: int = (
+            min(minimum_score_values) if is_white else max(minimum_score_values)
+        )
+        maximum_score_type: ScoreType = ScoreType.MATE if quantity_mate_scores > 0 else ScoreType.CP
+        maximum_score_values: List[int] = [
+            result.score_value
+            for result in engine_position_analysis_results
+            if result.score_type == maximum_score_type
+        ]
+        maximum_score_value: int = (
+            max(maximum_score_values) if is_white else min(maximum_score_values)
+        )
+        depth_values = [result.depth for result in engine_position_analysis_results]
+        median_depth: int = int(round(median(depth_values), 0))
+        seldepth_values = [result.seldepth for result in engine_position_analysis_results]
+        median_seldepth: int = int(round(median(seldepth_values), 0))
+        time_values = [result.time_in_seconds for result in engine_position_analysis_results]
+        median_time_in_seconds: float = round(median(time_values), 2)
+        minimum_depth: int = min(depth_values)
+        minimum_seldepth: int = min(seldepth_values)
+        minimum_time_in_seconds: float = min(time_values)
+        maximum_depth: int = max(depth_values)
+        maximum_seldepth: int = max(seldepth_values)
+        maximum_time_in_seconds: float = max(time_values)
+        started_at_values = [
+            result.started_analysis_at for result in engine_position_analysis_results
+        ]
+        started_analysis_at: datetime = min(started_at_values)
+        finished_at_values = [
+            result.finished_analysis_at for result in engine_position_analysis_results
+        ]
+        finished_analysis_at: datetime = max(finished_at_values)
 
-        median_score: PositionMedianScoreResult = PositionMedianScoreResult(
-            score_type=score_type, score_value=score_value
+        aggregated_position_results: AggregatedPositionResults = AggregatedPositionResults(
+            median_score_type=median_score_type,
+            median_score_value=median_score_value,
+            minimum_score_type=minimum_score_type,
+            minimum_score_value=minimum_score_value,
+            maximum_score_type=maximum_score_type,
+            maximum_score_value=maximum_score_value,
+            median_depth=median_depth,
+            median_seldepth=median_seldepth,
+            median_time_in_seconds=median_time_in_seconds,
+            minimum_depth=minimum_depth,
+            minimum_seldepth=minimum_seldepth,
+            minimum_time_in_seconds=minimum_time_in_seconds,
+            maximum_depth=maximum_depth,
+            maximum_seldepth=maximum_seldepth,
+            maximum_time_in_seconds=maximum_time_in_seconds,
+            started_analysis_at=started_analysis_at,
+            finished_analysis_at=finished_analysis_at,
         )
 
-        return median_score
+        return aggregated_position_results
 
     def __maintain_data__(self) -> None:
         """
         Maintains the chess engine configuration data in the database.
         """
-        database_manager: DatabaseManager = DatabaseManager()
-
         try:
             position_table = self.parameters.position_table_name
             position_analysis_table = self.parameters.position_analysis_table_name
@@ -192,10 +186,14 @@ class PositionManager:
                 f"SELECT (COUNT(1)) AS quantity FROM {position_analysis_table} "
                 f"WHERE position_id = '{position_id}'"
             )
-            position_quantity_query: Query = database_manager.execute(position_quantity_sql)[0]
-            position_analysis_quantity_query: Query = database_manager.execute(
+            position_quantity_result = self.chess_engine_manager.database_manager.execute(
+                position_quantity_sql
+            )
+            position_quantity_query: Query = position_quantity_result[0]
+            position_analysis_quantity_result = self.chess_engine_manager.database_manager.execute(
                 position_analysis_quantity_sql
-            )[0]
+            )
+            position_analysis_quantity_query: Query = position_analysis_quantity_result[0]
             position_quantity: int = (
                 position_quantity_query.raw_data[0].get("quantity", 0)  # type: ignore
             )
@@ -216,8 +214,12 @@ class PositionManager:
                 position_analysis_sql: str = (
                     f"SELECT * FROM {position_analysis_table} WHERE position_id = '{position_id}'"
                 )
-                position_query: Query = database_manager.execute(position_sql)[0]
-                position_analysis_query: Query = database_manager.execute(position_analysis_sql)[0]
+                position_query: Query = self.chess_engine_manager.database_manager.execute(
+                    position_sql
+                )[0]
+                position_analysis_query: Query = self.chess_engine_manager.database_manager.execute(
+                    position_analysis_sql
+                )[0]
                 self.position_data: PositionData = (
                     PositionData.model_validate(position_query.raw_data[0])  # type: ignore
                 )
@@ -234,14 +236,14 @@ class PositionManager:
                     f"DELETE FROM {self.parameters.position_analysis_table_name} "
                     f"WHERE position_id = '{self.context.position_id}'"
                 )
-                database_manager.execute(position_delete_sql)
-                database_manager.execute(position_analysis_delete_sql)
+                self.chess_engine_manager.database_manager.execute(position_delete_sql)
+                self.chess_engine_manager.database_manager.execute(position_analysis_delete_sql)
 
                 engine_position_analysis_results: List[EnginePositionAnalysisResult] = (
                     self.__get_engine_position_analysis_results__()
                 )
-                median_score: PositionMedianScoreResult = self.__get_position_median_score_result__(
-                    engine_position_analysis_results=(engine_position_analysis_results)
+                median_score: AggregatedPositionResults = self.__aggregate_position_results__(
+                    engine_position_analysis_results=engine_position_analysis_results
                 )
                 self.position_data: PositionData = PositionData(
                     position_id=self.context.position_id,
@@ -250,8 +252,23 @@ class PositionManager:
                     turn=self.context.turn,
                     termination=self.context.termination,
                     result=self.context.result,
-                    score_type=median_score.score_type,
-                    score_value=median_score.score_value,
+                    median_score_type=median_score.median_score_type,
+                    median_score_value=median_score.median_score_value,
+                    minimum_score_type=median_score.minimum_score_type,
+                    minimum_score_value=median_score.minimum_score_value,
+                    maximum_score_type=median_score.maximum_score_type,
+                    maximum_score_value=median_score.maximum_score_value,
+                    median_depth=median_score.median_depth,
+                    median_seldepth=median_score.median_seldepth,
+                    median_time_in_seconds=median_score.median_time_in_seconds,
+                    minimum_depth=median_score.minimum_depth,
+                    minimum_seldepth=median_score.minimum_seldepth,
+                    minimum_time_in_seconds=median_score.minimum_time_in_seconds,
+                    maximum_depth=median_score.maximum_depth,
+                    maximum_seldepth=median_score.maximum_seldepth,
+                    maximum_time_in_seconds=median_score.maximum_time_in_seconds,
+                    started_analysis_at=median_score.started_analysis_at,
+                    finished_analysis_at=median_score.finished_analysis_at,
                 )
                 self.position_analysis_data: List[PositionAnalysisData] = [
                     PositionAnalysisData(
@@ -269,13 +286,13 @@ class PositionManager:
                     for engine_position_analysis_result in engine_position_analysis_results
                 ]
 
-                database_manager.insert(
+                self.chess_engine_manager.database_manager.insert(
                     self.parameters.position_table_name, self.position_data.model_dump()
                 )
                 position_analysis_data_dicts = [
                     data.model_dump() for data in self.position_analysis_data
                 ]
-                database_manager.insert(
+                self.chess_engine_manager.database_manager.insert(
                     self.parameters.position_analysis_table_name, position_analysis_data_dicts
                 )
         except Exception as error:
@@ -283,5 +300,3 @@ class PositionManager:
                 f"Failed to maintain chess engine configuration data in the database: {error}"
             )
             raise
-        finally:
-            database_manager.close()

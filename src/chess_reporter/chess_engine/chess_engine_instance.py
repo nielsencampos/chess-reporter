@@ -5,6 +5,7 @@ Chess engine instance for the Chess Reporter application.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from types import TracebackType
 from typing import TYPE_CHECKING, Optional
 
 from chess import Board
@@ -50,6 +51,33 @@ class ChessEngineInstance:
             evaluation_runs=self.__parameters.evaluation_runs,
         )
         self.limit: Limit = Limit(depth=self.__parameters.depth)
+
+    def __enter__(self) -> ChessEngineInstance:
+        """
+        Enables the use of the ChessEngineInstance as a context manager.
+        """
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> bool:
+        """
+        Ensures that the chess engine instance process is properly closed when exiting the context.
+
+        Args:
+            exc_type: The type of the exception, if any, that caused the
+                context to be exited.
+            exc_value: The exception instance, if any, that caused the
+                context to be exited.
+            traceback: The traceback object, if any, associated with the
+                exception that caused the context to be exited.
+        """
+        self.close()
+
+        return False
 
     def get_engine_position_analysis_result(
         self, position_analysis_index: int, board: Board

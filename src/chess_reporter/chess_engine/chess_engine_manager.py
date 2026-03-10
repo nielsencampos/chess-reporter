@@ -5,7 +5,8 @@ Chess engine manager for the Chess Reporter application.
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, List
+from types import TracebackType
+from typing import TYPE_CHECKING, List, Optional
 
 from chess import Board
 from loguru import logger
@@ -40,34 +41,58 @@ class ChessEngineManager:
         """
         self.__logger: Logger = logger.bind(name="chess-reporter")
         self.parameters: ChessEngineParameters = ChessEngineParameters()
-        self.__instance: ChessEngineInstance = ChessEngineInstance()
-        self.data: ChessEngineData = self.__instance.data
+        self.chess_engine_instance: ChessEngineInstance = ChessEngineInstance()
+        self.data: ChessEngineData = self.chess_engine_instance.data
+        self.database_manager: DatabaseManager = DatabaseManager()
 
         self.__maintain_data__()
+
+    def __enter__(self) -> ChessEngineManager:
+        """
+        Enables the use of the ChessEngineManager as a context manager.
+        """
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> bool:
+        """
+        Ensures that the chess engine manager process is properly closed when exiting the context.
+
+        Args:
+            exc_type: The type of the exception, if any, that caused the
+                context to be exited.
+            exc_value: The exception instance, if any, that caused the
+                context to be exited.
+            traceback: The traceback object, if any, associated with the
+                exception that caused the context to be exited.
+        """
+        self.close()
+
+        return False
 
     def __maintain_data__(self) -> None:
         """
         Maintains the chess engine configuration data in the database.
         """
-        database_manager: DatabaseManager = DatabaseManager()
-
         try:
             quantity_sql: str = (
                 f"SELECT (COUNT(1)) AS quantity FROM {self.parameters.table_name} "
                 f"WHERE chess_engine_id = '{self.data.chess_engine_id}'"
             )
-            quantity_query: Query = database_manager.execute(quantity_sql)[0]
+            quantity_query: Query = self.database_manager.execute(quantity_sql)[0]
             quantity: int = quantity_query.raw_data[0].get("quantity", 0)  # type: ignore
 
             if quantity == 0:
-                database_manager.insert(self.parameters.table_name, self.data.model_dump())
+                self.database_manager.insert(self.parameters.table_name, self.data.model_dump())
         except Exception as error:
             self.__logger.exception(
                 f"Failed to maintain chess engine configuration data in the database: {error}"
             )
             raise
-        finally:
-            database_manager.close()
 
     def get_engine_position_analysis_results(
         self, board: Board, result: ResultType = ResultType.ONGOING
@@ -109,7 +134,7 @@ class ChessEngineManager:
         else:
             for position_analysis_index in range(1, self.data.evaluation_runs + 1):
                 engine_position_analysis_result: EnginePositionAnalysisResult = (
-                    self.__instance.get_engine_position_analysis_result(
+                    self.chess_engine_instance.get_engine_position_analysis_result(
                         position_analysis_index=position_analysis_index,
                         board=board,
                     )
@@ -128,4 +153,5 @@ class ChessEngineManager:
         """
         Closes the chess engine process and releases any associated resources.
         """
-        self.__instance.close()
+        self.chess_engine_instance.close()
+        self.database_manager.close()

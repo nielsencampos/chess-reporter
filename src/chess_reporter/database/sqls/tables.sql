@@ -36,15 +36,30 @@ COMMENT ON COLUMN chess_reporter.chess_engine.__ingested_at
     IS 'Internal timestamp to set when the data was ingested';
 
 CREATE TABLE IF NOT EXISTS chess_reporter.position (
-    position_id     TEXT NOT NULL PRIMARY KEY,
-    chess_engine_id TEXT NOT NULL,
-    fen             TEXT NOT NULL,
-    turn            TEXT NOT NULL,
-    termination     TEXT NOT NULL,
-    result          TEXT NOT NULL,
-    score_type      TEXT NOT NULL,
-    score_value     BIGINT NOT NULL,
-    __ingested_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    position_id             TEXT NOT NULL PRIMARY KEY,
+    chess_engine_id         TEXT NOT NULL,
+    fen                     TEXT NOT NULL,
+    turn                    TEXT NOT NULL,
+    termination             TEXT NOT NULL,
+    result                  TEXT NOT NULL,
+    median_score_type       TEXT NOT NULL,
+    median_score_value      BIGINT NOT NULL,
+    minimum_score_type      TEXT NOT NULL,
+    minimum_score_value     BIGINT NOT NULL,
+    maximum_score_type      TEXT NOT NULL,
+    maximum_score_value     BIGINT NOT NULL,
+    median_depth            BIGINT NOT NULL,
+    median_seldepth         BIGINT NOT NULL,
+    median_time_in_seconds  DOUBLE PRECISION NOT NULL,
+    minimum_depth           BIGINT NOT NULL,
+    minimum_seldepth        BIGINT NOT NULL,
+    minimum_time_in_seconds DOUBLE PRECISION NOT NULL,
+    maximum_depth           BIGINT NOT NULL,
+    maximum_seldepth        BIGINT NOT NULL,
+    maximum_time_in_seconds DOUBLE PRECISION NOT NULL,
+    started_analysis_at     TIMESTAMP NOT NULL,
+    finished_analysis_at    TIMESTAMP NOT NULL,
+    __ingested_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT turn_valid CHECK (turn IN ('white', 'black')),
     CONSTRAINT termination_valid CHECK (termination IN (
         'ongoing',
@@ -53,7 +68,9 @@ CREATE TABLE IF NOT EXISTS chess_reporter.position (
         'insufficient_material', 'threefold_repetition', 'fifty_moves_rule', 'fivefold_repetition',
         'seventyfive_moves', 'variant_draw')),
     CONSTRAINT result_valid CHECK (result IN ('ongoing', 'white_won', 'black_won', 'draw')),
-    CONSTRAINT score_type_valid CHECK (score_type IN ('cp', 'mate')),
+    CONSTRAINT median_score_type_valid CHECK (median_score_type IN ('cp', 'mate')),
+    CONSTRAINT minimum_score_type_valid CHECK (minimum_score_type IN ('cp', 'mate')),
+    CONSTRAINT maximum_score_type_valid CHECK (maximum_score_type IN ('cp', 'mate')),
     FOREIGN KEY (chess_engine_id) REFERENCES chess_reporter.chess_engine (chess_engine_id)
 );
 COMMENT ON TABLE chess_reporter.position
@@ -70,26 +87,56 @@ COMMENT ON COLUMN chess_reporter.position.termination
     IS 'Termination status of the position evaluation';
 COMMENT ON COLUMN chess_reporter.position.result
     IS 'Result of the position evaluation';
-COMMENT ON COLUMN chess_reporter.position.score_type
-    IS 'Type of the score: `cp` for centipawns or `mate` for mate in N moves';
-COMMENT ON COLUMN chess_reporter.position.score_value
-    IS 'Value of the score: centipawns or mate in N moves';
+COMMENT ON COLUMN chess_reporter.position.median_score_type
+    IS 'Type of the median and final score: `cp` for centipawns or `mate` for mate in N moves';
+COMMENT ON COLUMN chess_reporter.position.median_score_value
+    IS 'Value of the median and final score: centipawns or mate in N moves';
+COMMENT ON COLUMN chess_reporter.position.minimum_score_type
+    IS 'Type of the minimum score: `cp` for centipawns or `mate` for mate in N moves';
+COMMENT ON COLUMN chess_reporter.position.minimum_score_value
+    IS 'Value of the minimum score: centipawns or mate in N moves';
+COMMENT ON COLUMN chess_reporter.position.maximum_score_type
+    IS 'Type of the maximum score: `cp` for centipawns or `mate` for mate in N moves';
+COMMENT ON COLUMN chess_reporter.position.maximum_score_value
+    IS 'Value of the maximum score: centipawns or mate in N moves';
+COMMENT ON COLUMN chess_reporter.position.median_depth
+    IS 'Median search depth across all evaluations for the position';
+COMMENT ON COLUMN chess_reporter.position.median_seldepth
+    IS 'Median selective search depth across all evaluations for the position';
+COMMENT ON COLUMN chess_reporter.position.median_time_in_seconds
+    IS 'Median time taken in seconds across all evaluations for the position';
+COMMENT ON COLUMN chess_reporter.position.minimum_depth
+    IS 'Minimum search depth across all evaluations for the position';
+COMMENT ON COLUMN chess_reporter.position.minimum_seldepth
+    IS 'Minimum selective search depth across all evaluations for the position';
+COMMENT ON COLUMN chess_reporter.position.minimum_time_in_seconds
+    IS 'Minimum time taken in seconds across all evaluations for the position';
+COMMENT ON COLUMN chess_reporter.position.maximum_depth
+    IS 'Maximum search depth across all evaluations for the position';
+COMMENT ON COLUMN chess_reporter.position.maximum_seldepth
+    IS 'Maximum selective search depth across all evaluations for the position';
+COMMENT ON COLUMN chess_reporter.position.maximum_time_in_seconds
+    IS 'Maximum time taken in seconds across all evaluations for the position';
+COMMENT ON COLUMN chess_reporter.position.started_analysis_at
+    IS 'Timestamp indicating when the chess engine analysis for this position started';
+COMMENT ON COLUMN chess_reporter.position.finished_analysis_at
+    IS 'Timestamp indicating when the chess engine analysis for this position finished';
 COMMENT ON COLUMN chess_reporter.position.__ingested_at
     IS 'Internal timestamp to set when the data was ingested';
 
 CREATE TABLE IF NOT EXISTS chess_reporter.position_analysis (
-    position_analysis_id       TEXT NOT NULL PRIMARY KEY,
-    position_id                TEXT NOT NULL,
-    position_analysis_index    BIGINT NOT NULL,
-    score_type                 TEXT NOT NULL,
-    score_value                BIGINT NOT NULL,
-    depth                      BIGINT NOT NULL,
-    seldepth                   BIGINT NOT NULL,
-    time_in_seconds            DOUBLE PRECISION NOT NULL,
-    is_forced_result           BOOLEAN NOT NULL,
-    started_analysis_at        TIMESTAMP NOT NULL,
-    finished_analysis_at       TIMESTAMP NOT NULL,
-    __ingested_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    position_analysis_id    TEXT NOT NULL PRIMARY KEY,
+    position_id             TEXT NOT NULL,
+    position_analysis_index BIGINT NOT NULL,
+    score_type              TEXT NOT NULL,
+    score_value             BIGINT NOT NULL,
+    depth                   BIGINT NOT NULL,
+    seldepth                BIGINT NOT NULL,
+    time_in_seconds         DOUBLE PRECISION NOT NULL,
+    is_forced_result        BOOLEAN NOT NULL,
+    started_analysis_at     TIMESTAMP NOT NULL,
+    finished_analysis_at    TIMESTAMP NOT NULL,
+    __ingested_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(position_id, position_analysis_index),
     CONSTRAINT position_analysis_index_valid CHECK (position_analysis_index >= 1),
     CONSTRAINT score_type_valid CHECK (score_type IN ('cp', 'mate')),
