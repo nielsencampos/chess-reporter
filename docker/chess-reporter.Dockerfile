@@ -38,9 +38,12 @@ COPY src/ src/
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH="/app/src"
+ENV DATABASE_PATH="/app/data/database/main.duckdb"
+ENV STORAGE_PATH="/app/data/storage"
+ENV LOGS_PATH="/app/logs"
 
 COPY notebooks/ notebooks/
 
 EXPOSE 8888
 
-CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root", "--notebook-dir=/app/notebooks", "--IdentityProvider.token=''"]
+CMD ["sh", "-c", "python -m chess_reporter.bootstrap && jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --notebook-dir=/app/notebooks --IdentityProvider.token=''"]

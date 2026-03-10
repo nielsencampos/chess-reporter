@@ -4,8 +4,6 @@ Chess engine manager for the Chess Reporter application.
 
 from __future__ import annotations
 
-from asyncio import AbstractEventLoop, gather, get_event_loop, run
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, List
 
@@ -42,14 +40,8 @@ class ChessEngineManager:
         """
         self.__logger: Logger = logger.bind(name="chess-reporter")
         self.parameters: ChessEngineParameters = ChessEngineParameters()
-        self.__instances: List[ChessEngineInstance] = [
-            ChessEngineInstance() for _ in range(self.parameters.evaluation_runs)
-        ]
-        self.data: ChessEngineData = self.__instances[0].data
-
-        self.__executor: ThreadPoolExecutor = ThreadPoolExecutor(
-            max_workers=self.parameters.evaluation_runs
-        )
+        self.__instance: ChessEngineInstance = ChessEngineInstance()
+        self.data: ChessEngineData = self.__instance.data
 
         self.__maintain_data__()
 
@@ -76,34 +68,6 @@ class ChessEngineManager:
             raise
         finally:
             database_manager.close()
-
-    async def async_get_engine_position_analysis_results(
-        self, board: Board
-    ) -> List[EnginePositionAnalysisResult]:
-        """
-        Asynchronously retrieves the chess engine analysis results for a given chess position.
-
-        Args:
-            board (Board): The chess position for which to retrieve the analysis results.
-            result (ResultType, optional): The result of the game for the given position.
-
-        Returns:
-            List[EnginePositionAnalysisResult]: A list of chess engine analysis
-                results for the given position.
-        """
-
-        loop: AbstractEventLoop = get_event_loop()
-        tasks = [
-            loop.run_in_executor(
-                self.__executor,
-                self.__instances[position_analysis_index - 1].get_engine_position_analysis_result,
-                position_analysis_index,
-                board,
-            )
-            for position_analysis_index in range(1, self.data.evaluation_runs + 1)
-        ]
-
-        return await gather(*tasks)
 
     def get_engine_position_analysis_results(
         self, board: Board, result: ResultType = ResultType.ONGOING
@@ -143,9 +107,14 @@ class ChessEngineManager:
                 )
                 engine_position_analysis_results.append(position_analysis_data)
         else:
-            engine_position_analysis_results = run(
-                self.async_get_engine_position_analysis_results(board)
-            )
+            for position_analysis_index in range(1, self.data.evaluation_runs + 1):
+                engine_position_analysis_result: EnginePositionAnalysisResult = (
+                    self.__instance.get_engine_position_analysis_result(
+                        position_analysis_index=position_analysis_index,
+                        board=board,
+                    )
+                )
+                engine_position_analysis_results.append(engine_position_analysis_result)
 
         if len(engine_position_analysis_results) != self.data.evaluation_runs:
             raise ValueError(
@@ -159,7 +128,4 @@ class ChessEngineManager:
         """
         Closes the chess engine process and releases any associated resources.
         """
-        self.__executor.shutdown(wait=True)
-
-        for instance in self.__instances:
-            instance.close()
+        self.__instance.close()

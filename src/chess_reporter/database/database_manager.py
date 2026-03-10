@@ -238,11 +238,12 @@ class DatabaseManager:
             raise ValueError(error)
 
         try:
-            rows_inserted: int = len(df)
-
-            self.connection.append(table_name=table_name, df=df, by_name=True)
-
-            self.__logger.info("Inserted {} rows into table `{}`", rows_inserted, table_name)
+            columns: str = ", ".join(f'"{col}"' for col in df.columns)
+            self.connection.register("_insert_tmp", df)
+            self.connection.execute(
+                f"INSERT INTO {table_name} ({columns}) SELECT {columns} FROM _insert_tmp"
+            )
+            self.connection.unregister("_insert_tmp")
         except Exception:
             self.__logger.exception("An error occurred while inserting data into the database")
             raise

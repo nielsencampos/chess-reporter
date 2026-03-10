@@ -6,6 +6,7 @@ Bootstrap
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from os import environ
 from sys import stdout
 
 from loguru import logger
@@ -41,7 +42,8 @@ def setup_logger(level: str = "DEBUG") -> None:
     )
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-    logger_file_name = "logs/chess_reporter_bootstrap_{}.log".format(timestamp)
+    logs_dir = environ.get("LOGS_PATH", "logs")
+    logger_file_name = "{}/chess_reporter_bootstrap_{}.log".format(logs_dir, timestamp)
 
     logger.add(
         logger_file_name,

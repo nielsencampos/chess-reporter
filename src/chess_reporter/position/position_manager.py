@@ -133,7 +133,7 @@ class PositionManager:
 
         engine_position_analysis_results: List[EnginePositionAnalysisResult] = (
             self.chess_engine_manager.get_engine_position_analysis_results(
-                board=self.context.board, result=self.context.result
+                board=self.context.board.copy(stack=False), result=self.context.result
             )
         )
 

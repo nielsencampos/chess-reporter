@@ -26,7 +26,7 @@ dist/
 .idea/
 
 # Logs
-logs/
+logs/*.log
 
 # Secrets
 secrets.toml

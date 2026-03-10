@@ -4,6 +4,7 @@ Storage configuration parameters for the Chess Reporter application.
 
 from __future__ import annotations
 
+from os import environ
 from pathlib import Path
 from typing import Set
 
@@ -16,7 +17,7 @@ class StorageParameters(BaseModel):
     """
 
     path: Path = Field(
-        default=Path("data/storage"),
+        default_factory=lambda: Path(environ.get("STORAGE_PATH", "data/storage")),
         description="Path to the storage directory",
     )
     folders: Set[str] = Field(

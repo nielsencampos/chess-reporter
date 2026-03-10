@@ -37,6 +37,8 @@ spec:
               mountPath: /app/data
             - name: notebooks
               mountPath: /app/notebooks
+            - name: logs
+              mountPath: /app/logs
           resources:
             requests:
               memory: "1Gi"
@@ -52,4 +54,8 @@ spec:
         - name: notebooks
           hostPath:
             path: ${LOCAL_PATH}/notebooks
+            type: DirectoryOrCreate
+        - name: logs
+          hostPath:
+            path: ${LOCAL_PATH}/logs
             type: DirectoryOrCreate

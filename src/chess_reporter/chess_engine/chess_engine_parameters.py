@@ -25,7 +25,7 @@ class ChessEngineParameters(BaseModel):
     )
     hash_table_mb: int = Field(
         description="Size of the hash table in megabytes",
-        default=2048,
+        default=4096,
         ge=1024,
         frozen=True,
     )

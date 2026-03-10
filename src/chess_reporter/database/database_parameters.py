@@ -4,6 +4,7 @@ Database configuration parameters for the Chess Reporter application.
 
 from __future__ import annotations
 
+from os import environ
 from pathlib import Path
 from typing import Any, Dict
 
@@ -16,7 +17,7 @@ class DatabaseParameters(BaseModel):
     """
 
     path: Path = Field(
-        default=Path("data/database/main.duckdb"),
+        default_factory=lambda: Path(environ.get("DATABASE_PATH", "data/database/main.duckdb")),
         description="Path to the DuckDB database file",
     )
     threads: int = Field(default=4, description="Number of execution threads for DuckDB")

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker push ghcr.io/nielsencampos/chess-reporter:latest)",
+      "Bash(powershell.exe -Command \"\\(Get-Content .\\\\k8s\\\\chess-reporter.yaml -Raw\\) -replace ''\\\\$\\\\{LOCAL_PATH\\\\}'', ''/run/desktop/mnt/host/d/projects/chess-reporter'' | kubectl apply -f -\")",
+      "Bash(kubectl rollout status deployment/chess-reporter -n chess-reporter --timeout=120s)"
+    ]
+  }
+}
