@@ -1,3 +1,6 @@
+# Claude
+.claude/
+
 # Byte-compiled / optimized files
 __pycache__/
 *.py[cod]
