@@ -1,7 +1,7 @@
 [project]
 name = "chess-reporter"
-version = "0.2.1"
-description = "Processes PGN files and analyzes each position using Stockfish. Multiple engine instances run in parallel (default: 5, always odd) and results are aggregated for robustness. Data is stored in DuckDB and explored via JupyterLab."
+version = "0.2.2"
+description = "Cold, objective chess game analysis — per-move accuracy, termination context penalties, and opening classification, powered by Stockfish and DuckDB."
 readme = "README.md"
 requires-python = ">=3.13"
 
