@@ -2,9 +2,32 @@
 
 > Cold, objective analysis of chess games and openings — free from emotion or bias.
 
-Chess Reporter is a personal portfolio project born from a genuine passion for chess, software engineering, and data architecture. It evaluates every move of a chess game using Stockfish, assigns an accuracy score per move, and — crucially — accounts for how the game ended.
+![Python](https://img.shields.io/badge/Python-3.13+-3776AB?logo=python&logoColor=white)
+![Stockfish](https://img.shields.io/badge/Stockfish-18-darkgreen?logo=lichess&logoColor=white)
+![DuckDB](https://img.shields.io/badge/DuckDB-OLAP-FFF000?logo=duckdb&logoColor=black)
+![JupyterLab](https://img.shields.io/badge/JupyterLab-notebooks-F37626?logo=jupyter&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-container-2496ED?logo=docker&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-orchestration-326CE5?logo=kubernetes&logoColor=white)
+![Open Data](https://img.shields.io/badge/open--data-reproducible-success)
+![Software Architecture](https://img.shields.io/badge/software--architecture-explicit%20domain%20modeling-blueviolet)
 
-A player who loses on time while winning gets penalized. A player who accepts a draw from a winning position gets penalized. The result alone does not tell the whole story. Chess Reporter does.
+Chess Reporter is a chess analysis pipeline built with Python and Stockfish that generates reproducible **open datasets** from objective engine evaluation. Born from a genuine passion for chess and data architecture, it evaluates every move using Stockfish, assigns an accuracy score per move, and — crucially — accounts for how the game ended.
+
+A player who loses on time while winning gets penalized. A player who accepts a draw from a winning position gets penalized. The result alone does not tell the whole story — Chess Reporter does.
+
+---
+
+## Open Data
+
+One of the goals of Chess Reporter is to generate reproducible **open datasets** derived from objective engine analysis.
+
+Instead of keeping results locked behind a running service, the project stores analysis results directly in a portable DuckDB database.
+
+This makes it possible to:
+
+- share complete analysis datasets as a single file
+- allow anyone to query the results locally
+- encourage reproducible chess research and experimentation
 
 ---
 
@@ -92,6 +115,15 @@ chess-reporter/
 ├── pyproject.toml
 └── README.md
 ```
+
+---
+
+## Design Principles
+
+- Objective analysis over subjective interpretation
+- Reproducible computation
+- Open datasets instead of locked services
+- Explicit domain modeling
 
 ---
 
