@@ -62,6 +62,24 @@ The application is a chess game analysis pipeline using Stockfish + DuckDB, expo
 - **Kubernetes**: `k8s/chess-reporter.yaml` — Service (NodePort 30888) + Deployment with hostPath volumes. JupyterLab accessible at `http://localhost:30888`.
 - **Notebooks**: live in `notebooks/`, served by JupyterLab in the container.
 
+## BPR — Build, Push & Run
+
+Builds the Docker image, pushes to GHCR, and redeploys on k8s. Run in PowerShell.
+
+```powershell
+# 1. Build
+docker build -f docker/chess-reporter.Dockerfile -t ghcr.io/nielsencampos/chess-reporter:latest .
+
+# 2. Push
+docker push ghcr.io/nielsencampos/chess-reporter:latest
+
+# 3. Restart deployment (pulls the new latest)
+kubectl rollout restart deployment/chess-reporter --namespace chess-reporter
+kubectl rollout status deployment/chess-reporter --namespace chess-reporter
+```
+
+---
+
 ### Deploying locally (Windows)
 
 Docker Desktop exposes Windows drives inside the k8s node at `/run/desktop/mnt/host/{drive}/...`. Always use PowerShell to apply the k8s manifest — **never** `envsubst` on Windows (it passes `D:/...` paths that Docker misparsed as bind mount mode):

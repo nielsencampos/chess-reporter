@@ -43,6 +43,7 @@ ENV STORAGE_PATH="/app/data/storage"
 ENV LOGS_PATH="/app/logs"
 
 COPY notebooks/ notebooks/
+COPY docker/startup/ /root/.ipython/profile_default/startup/
 
 EXPOSE 8888
 

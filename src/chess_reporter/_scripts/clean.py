@@ -58,7 +58,6 @@ def clean_precommit_cache() -> None:
     Cleans up pre-commit cache by running the 'pre-commit clean' command.
     """
     print("\n🔧 Cleaning pre-commit cache...")
-    print("\n🔧 Cleaning pre-commit cache...")
     precommit = which("pre-commit")
 
     if precommit is None:
@@ -77,12 +76,45 @@ def clean_precommit_cache() -> None:
 
 def clean_logs(root: Path) -> None:
     """
-    Cleans up log files by removing all .log files in the directory tree.
+    Cleans up log files by removing all .log and compressed .zip log files.
     """
     print("\n📄 Cleaning log files...")
 
     for log_file in root.rglob("*.log"):
         remove_path(log_file)
+    for zip_file in root.rglob("*.zip"):
+        remove_path(zip_file)
+
+
+def clean_tool_caches(root: Path) -> None:
+    """
+    Cleans up tool cache directories: .pytest_cache, .ruff_cache.
+    """
+    print("\n🗑️  Cleaning tool caches...")
+
+    for name in (".pytest_cache", ".ruff_cache"):
+        for path in root.rglob(name):
+            remove_path(path)
+
+
+def clean_jupyter(root: Path) -> None:
+    """
+    Cleans up Jupyter checkpoint directories.
+    """
+    print("\n📓 Cleaning Jupyter checkpoints...")
+
+    for path in root.rglob(".ipynb_checkpoints"):
+        remove_path(path)
+
+
+def clean_duckdb_wal(root: Path) -> None:
+    """
+    Cleans up leftover DuckDB WAL files.
+    """
+    print("\n🦆 Cleaning DuckDB WAL files...")
+
+    for wal_file in root.rglob("*.duckdb.wal"):
+        remove_path(wal_file)
 
 
 def main() -> None:
@@ -93,9 +125,12 @@ def main() -> None:
     print(f"🧹 Starting cleanup in: {root}")
 
     clean_pycache(root)
+    clean_tool_caches(root)
     clean_uv_cache()
     clean_precommit_cache()
     clean_logs(root)
+    clean_jupyter(root)
+    clean_duckdb_wal(root)
 
     print("\n✅ Cleanup complete!\n")
 
