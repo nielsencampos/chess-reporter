@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS chess_reporter.chess_engine (
     hash_table_mb   BIGINT NOT NULL,
     depth           BIGINT NOT NULL,
     evaluation_runs BIGINT NOT NULL,
-    __ingested_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ingested_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT threads_valid CHECK (threads >= 1),
     CONSTRAINT hash_table_mb_valid CHECK (hash_table_mb >= 1024),
     CONSTRAINT depth_valid CHECK (depth >= 15),
@@ -32,7 +32,7 @@ COMMENT ON COLUMN chess_reporter.chess_engine.depth
     IS 'Search depth';
 COMMENT ON COLUMN chess_reporter.chess_engine.evaluation_runs
     IS 'Number of evaluation runs to perform';
-COMMENT ON COLUMN chess_reporter.chess_engine.__ingested_at
+COMMENT ON COLUMN chess_reporter.chess_engine.ingested_at
     IS 'Internal timestamp to set when the data was ingested';
 
 CREATE TABLE IF NOT EXISTS chess_reporter.position (
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS chess_reporter.position (
     maximum_time_in_seconds DOUBLE PRECISION NOT NULL,
     started_analysis_at     TIMESTAMP NOT NULL,
     finished_analysis_at    TIMESTAMP NOT NULL,
-    __ingested_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ingested_at             TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT turn_valid CHECK (turn IN ('white', 'black')),
     CONSTRAINT termination_valid CHECK (termination IN (
         'ongoing',
@@ -121,7 +121,7 @@ COMMENT ON COLUMN chess_reporter.position.started_analysis_at
     IS 'Timestamp indicating when the chess engine analysis for this position started';
 COMMENT ON COLUMN chess_reporter.position.finished_analysis_at
     IS 'Timestamp indicating when the chess engine analysis for this position finished';
-COMMENT ON COLUMN chess_reporter.position.__ingested_at
+COMMENT ON COLUMN chess_reporter.position.ingested_at
     IS 'Internal timestamp to set when the data was ingested';
 
 CREATE TABLE IF NOT EXISTS chess_reporter.position_analysis (
@@ -136,7 +136,7 @@ CREATE TABLE IF NOT EXISTS chess_reporter.position_analysis (
     is_forced_result        BOOLEAN NOT NULL,
     started_analysis_at     TIMESTAMP NOT NULL,
     finished_analysis_at    TIMESTAMP NOT NULL,
-    __ingested_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ingested_at             TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(position_id, position_analysis_index),
     CONSTRAINT position_analysis_index_valid CHECK (position_analysis_index >= 1),
     CONSTRAINT score_type_valid CHECK (score_type IN ('cp', 'mate')),
@@ -169,5 +169,5 @@ COMMENT ON COLUMN chess_reporter.position_analysis.started_analysis_at
     IS 'Timestamp indicating when the chess engine analysis for this position started';
 COMMENT ON COLUMN chess_reporter.position_analysis.finished_analysis_at
     IS 'Timestamp indicating when the chess engine analysis for this position finished';
-COMMENT ON COLUMN chess_reporter.position_analysis.__ingested_at
+COMMENT ON COLUMN chess_reporter.position_analysis.ingested_at
     IS 'Internal timestamp to set when the data was ingested';

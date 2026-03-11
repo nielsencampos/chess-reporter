@@ -38,9 +38,9 @@ class DatabaseManager:
         """
         Initializes the DatabaseManager.
         """
-        self.__logger: Logger = logger.bind(name="chess-reporter")
-        self.__parameters: DatabaseParameters = DatabaseParameters()
-        self.__connection: Optional[DuckDBPyConnection] = None
+        self._logger: Logger = logger.bind(name="chess-reporter")
+        self._parameters: DatabaseParameters = DatabaseParameters()
+        self._connection: Optional[DuckDBPyConnection] = None
 
     def __enter__(self) -> DatabaseManager:
         """
@@ -69,30 +69,30 @@ class DatabaseManager:
 
         return False
 
-    def __connect(self) -> None:
+    def _connect(self) -> None:
         """
         Establishes a connection to the DuckDB database.
         """
 
-        if self.__connection is not None:
+        if self._connection is not None:
             return
 
         try:
-            self.__parameters.path.parent.mkdir(parents=True, exist_ok=True)
+            self._parameters.path.parent.mkdir(parents=True, exist_ok=True)
         except Exception:
-            self.__logger.exception(
-                "Failed to create parent directory for database file `{}`", self.__parameters.path
+            self._logger.exception(
+                "Failed to create parent directory for database file `{}`", self._parameters.path
             )
             raise
 
         try:
-            self.__connection = connect(
-                database=str(self.__parameters.path),
+            self._connection = connect(
+                database=str(self._parameters.path),
                 read_only=False,
-                config=self.__parameters.config,
+                config=self._parameters.config,
             )
         except Exception:
-            self.__logger.exception("An error occurred while establishing the database connection")
+            self._logger.exception("An error occurred while establishing the database connection")
             raise
 
     @property
@@ -100,29 +100,29 @@ class DatabaseManager:
         """
         Provides access to the DuckDB database connection.
         """
-        self.__connect()
+        self._connect()
 
-        if self.__connection is None:
+        if self._connection is None:
             error: str = "Database connection is not established"
 
-            self.__logger.error(error)
+            self._logger.error(error)
             raise RuntimeError(error)
 
-        return self.__connection
+        return self._connection
 
     def close(self) -> None:
         """
         Closes the database connection if it is established.
         """
-        if self.__connection is None:
+        if self._connection is None:
             return
 
         try:
-            self.__connection.close()
+            self._connection.close()
         except Exception:
             pass
 
-    def __get_query_type(self, expression: Expression) -> QueryType:
+    def _get_query_type(self, expression: Expression) -> QueryType:
         """
         Determines the type of a SQL query based on its expression.
 
@@ -157,10 +157,10 @@ class DatabaseManager:
             sql: str = expression.sql(dialect="duckdb")
             error: str = "Unsupported SQL query type for statement `{}`" % sql
 
-            self.__logger.error(error)
+            self._logger.error(error)
             raise ValueError(error)
 
-    def __execute_expression(self, query: Query) -> Optional[DataFrame]:
+    def _execute_expression(self, query: Query) -> Optional[DataFrame]:
         """
         Executes a SQL query represented by a Query object and returns the result
         as a pandas DataFrame if applicable.
@@ -176,7 +176,7 @@ class DatabaseManager:
         try:
             sql: str = query.sql
 
-            self.__logger.debug("Executing SQL\n{}", sql)
+            self._logger.debug("Executing SQL\n{}", sql)
 
             if query.query_type == QueryType.DQL:
                 result: DataFrame = self.connection.execute(sql).fetchdf()
@@ -187,30 +187,27 @@ class DatabaseManager:
 
                 return
         except Exception:
-            self.__logger.exception(
+            self._logger.exception(
                 "An error occurred while executing the SQL query on the database"
             )
             raise
 
-    def execute(self, sql: str) -> List[Query]:
+    def _execute(self, sql: str) -> List[Query]:
         """
         Executes a raw SQL query on the database and returns a list of Query objects representing
         the executed queries, including their types, expressions, and result data if applicable.
-
-        The method parses the input SQL string, determines the type of each query, executes them on
-        the database, and collects the results in a structured format for further processing.
 
         Args:
             sql (str): A valid SQL query string to be executed on the database.
 
         Returns:
-            List[Query]: A list of Query objects representing the executed queries, where each Query
-                object contains the query type, SQL expression, and result data if applicable.
+            List[Query]: A list of Query objects representing the executed SQL statements, including
+                their types, expressions, and result data if applicable.
         """
         if not isinstance(sql, str) or sql.strip() == "":
             error: str = "SQL query must be a valid non-empty string."
 
-            self.__logger.error(error)
+            self._logger.error(error)
             raise ValueError(error)
 
         try:
@@ -219,7 +216,7 @@ class DatabaseManager:
             if len(expressions) == 0:
                 error: str = "Failed to parse SQL query: No valid SQL statements found."
 
-                self.__logger.error(error)
+                self._logger.error(error)
                 raise ValueError(error)
 
             queries_statements: List[Query] = []
@@ -228,22 +225,63 @@ class DatabaseManager:
                 if expression is None:
                     error: str = "Failed to parse SQL query: Invalid SQL statement found."
 
-                    self.__logger.error(error)
+                    self._logger.error(error)
                     raise ValueError(error)
 
-                query_type: QueryType = self.__get_query_type(expression)
+                query_type: QueryType = self._get_query_type(expression)
                 query: Query = Query(query_type=query_type, expression=expression)
-                data: Optional[DataFrame] = self.__execute_expression(query=query)
-                query.data = data
+                data: Optional[DataFrame] = self._execute_expression(query=query)
+                query.data_returned = data.copy() if data is not None else None
 
                 queries_statements.append(query)
 
             return queries_statements.copy()
         except Exception:
-            self.__logger.exception("Failed to parse SQL query `{}`", sql)
+            self._logger.exception("Failed to parse SQL query `{}`", sql)
             raise
 
-    def __insert_df(self, table_name: str, df: DataFrame) -> None:
+    def execute(self, sql: str) -> List[Query]:
+        """
+        Executes a raw SQL query on the database and returns a list of Query objects representing
+        the executed queries, including their types, expressions, and result data if applicable.
+
+        Args:
+            sql (str): A valid SQL query string to be executed on the database.
+
+        Returns:
+            List[Query]: A list of Query objects representing the executed SQL statements, including
+                their types, expressions, and result data if applicable.
+        """
+        return self._execute(sql).copy()
+
+    def query(self, sql: str) -> Query:
+        """
+        Executes a raw SQL query on the database and returns a single Query object representing
+        the executed query, including its type, expression, and result data if applicable.
+
+        Args:
+            sql (str): A valid SQL query string to be executed on the database.
+
+        Returns:
+            Query: A Query object representing the executed SQL statement, including its type,
+                expression, and result data if applicable.
+        """
+        queries: List[Query] = self._execute(sql).copy()
+
+        if len(queries) == 0:
+            error: str = "Failed to execute SQL query: No valid SQL statements found."
+
+            self._logger.error(error)
+            raise ValueError(error)
+        elif len(queries) > 1:
+            error: str = "Failed to execute SQL query: Multiple SQL statements found."
+
+            self._logger.error(error)
+            raise ValueError(error)
+
+        return queries[0]
+
+    def _insert_df(self, table_name: str, df: DataFrame) -> None:
         """
         Inserts data from a pandas DataFrame into a specified table in the DuckDB database.
 
@@ -256,13 +294,13 @@ class DatabaseManager:
         if not isinstance(table_name, str) or table_name.strip() == "":
             error: str = "Table name must be a valid non-empty string."
 
-            self.__logger.error(error)
+            self._logger.error(error)
             raise ValueError(error)
 
         if not isinstance(df, DataFrame) or df.empty:
             error: str = "DataFrame must be a valid non-empty pandas DataFrame."
 
-            self.__logger.error(error)
+            self._logger.error(error)
             raise ValueError(error)
 
         try:
@@ -273,10 +311,10 @@ class DatabaseManager:
             )
             self.connection.unregister("_insert_tmp")
         except Exception:
-            self.__logger.exception("An error occurred while inserting data into the database")
+            self._logger.exception("An error occurred while inserting data into the database")
             raise
 
-    def __insert_data(self, table_name: str, data: List[Dict[str, Any]]) -> None:
+    def _insert_data(self, table_name: str, data: List[Dict[str, Any]]) -> None:
         """
         Inserts data from a list of dictionaries into a specified table in the DuckDB database.
 
@@ -291,7 +329,7 @@ class DatabaseManager:
         if not isinstance(data, list) or len(data) == 0:
             error: str = "Data must be a valid non-empty list of dictionaries."
 
-            self.__logger.error(error)
+            self._logger.error(error)
             raise ValueError(error)
 
         if not all(isinstance(row, dict) for row in data):
@@ -300,17 +338,17 @@ class DatabaseManager:
                 " row of data."
             )
 
-            self.__logger.error(error)
+            self._logger.error(error)
             raise ValueError(error)
 
         try:
             df: DataFrame = DataFrame(data)
-            self.__insert_df(table_name=table_name, df=df)
+            self._insert_df(table_name=table_name, df=df)
         except Exception:
-            self.__logger.exception("An error occurred while inserting data into the database")
+            self._logger.exception("An error occurred while inserting data into the database")
             raise
 
-    def __insert_row(self, table_name: str, row: Dict[str, Any]) -> None:
+    def _insert_row(self, table_name: str, row: Dict[str, Any]) -> None:
         """
         Inserts a single row of data, represented as a dictionary, into a specified table in the
             DuckDB database.
@@ -326,13 +364,13 @@ class DatabaseManager:
         if not isinstance(row, dict) or len(row) == 0:
             error: str = "Row must be a valid non-empty dictionary."
 
-            self.__logger.error(error)
+            self._logger.error(error)
             raise ValueError(error)
 
         try:
-            self.__insert_data(table_name=table_name, data=[row])
+            self._insert_data(table_name=table_name, data=[row])
         except Exception:
-            self.__logger.exception("An error occurred while inserting data into the database")
+            self._logger.exception("An error occurred while inserting data into the database")
             raise
 
     @overload
@@ -365,16 +403,16 @@ class DatabaseManager:
                     - A single dictionary representing a single row of data.
         """
         if isinstance(data, DataFrame):
-            self.__insert_df(table_name, data)
+            self._insert_df(table_name, data)
         elif isinstance(data, list) and all(isinstance(row, dict) for row in data):
-            self.__insert_data(table_name, data)
+            self._insert_data(table_name, data)
         elif isinstance(data, dict):
-            self.__insert_row(table_name, data)
+            self._insert_row(table_name, data)
         else:
             error: str = (
                 "Data must be a valid non-empty DataFrame, a list of dictionaries, or a single "
                 "dictionary representing a row of data."
             )
 
-            self.__logger.error(error)
+            self._logger.error(error)
             raise ValueError(error)

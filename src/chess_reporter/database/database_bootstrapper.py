@@ -27,38 +27,38 @@ class DatabaseBootstrapper:
         """
         Initializes the DatabaseBootstrapper.
         """
-        self.__logger: Logger = logger.bind(name="chess-reporter")
+        self._logger: Logger = logger.bind(name="chess-reporter")
 
         sqls_dir: Path = Path(__file__).resolve().parent / "sqls"
 
-        self.__schemas_file_path: Path = sqls_dir / "schemas.sql"
-        self.__tables_file_path: Path = sqls_dir / "tables.sql"
-        self.___tests_file_path: Path = sqls_dir / "tests.sql"
+        self._schemas_file_path: Path = sqls_dir / "schemas.sql"
+        self._tables_file_path: Path = sqls_dir / "tables.sql"
+        self._tests_file_path: Path = sqls_dir / "tests.sql"
 
-        self.__validate_sql_files()
+        self._validate_sql_files()
 
-    def __validate_sql_files(self) -> None:
+    def _validate_sql_files(self) -> None:
         """
         Validates the existence of the SQL files for schemas and tables.
         """
-        if not self.__schemas_file_path.exists():
-            error: str = "Schemas SQL file not found at path: {}".format(self.__schemas_file_path)
+        if not self._schemas_file_path.exists():
+            error: str = "Schemas SQL file not found at path: {}".format(self._schemas_file_path)
 
-            self.__logger.error(error)
-
-            raise FileNotFoundError(error)
-
-        if not self.__tables_file_path.exists():
-            error: str = "Tables SQL file not found at path: {}".format(self.__tables_file_path)
-
-            self.__logger.error(error)
+            self._logger.error(error)
 
             raise FileNotFoundError(error)
 
-        if not self.___tests_file_path.exists():
-            error: str = "Tests SQL file not found at path: {}".format(self.___tests_file_path)
+        if not self._tables_file_path.exists():
+            error: str = "Tables SQL file not found at path: {}".format(self._tables_file_path)
 
-            self.__logger.error(error)
+            self._logger.error(error)
+
+            raise FileNotFoundError(error)
+
+        if not self._tests_file_path.exists():
+            error: str = "Tests SQL file not found at path: {}".format(self._tests_file_path)
+
+            self._logger.error(error)
 
             raise FileNotFoundError(error)
 
@@ -66,19 +66,11 @@ class DatabaseBootstrapper:
         """
         Bootstraps the database by executing the SQL files for schemas and tables.
         """
-        schemas_sqls: str = self.__schemas_file_path.read_text(encoding="utf-8")
-        tables_sqls: str = self.__tables_file_path.read_text(encoding="utf-8")
-        tests_sqls: str = self.___tests_file_path.read_text(encoding="utf-8")
+        schemas_sqls: str = self._schemas_file_path.read_text(encoding="utf-8")
+        tables_sqls: str = self._tables_file_path.read_text(encoding="utf-8")
+        tests_sqls: str = self._tests_file_path.read_text(encoding="utf-8")
 
-        database_manager: DatabaseManager = DatabaseManager()
-
-        try:
+        with DatabaseManager() as database_manager:
             database_manager.execute(schemas_sqls)
             database_manager.execute(tables_sqls)
             database_manager.execute(tests_sqls)
-        except Exception as error:
-            self.__logger.exception(f"Failed to bootstrap the database: {error}")
-
-            raise
-        finally:
-            database_manager.close()

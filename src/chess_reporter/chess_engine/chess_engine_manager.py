@@ -8,17 +8,20 @@ from datetime import datetime, timezone
 from types import TracebackType
 from typing import TYPE_CHECKING, List, Optional
 
-from chess import Board
 from loguru import logger
 
-from chess_reporter.chess_domain.chess_domain import ResultType, ScoreType
+from chess_reporter.chess_domain.chess_domain import (
+    EngineSetup,
+    PositionSetup,
+    ResultType,
+    ScoreType,
+)
 from chess_reporter.chess_engine.chess_engine_domain import (
     ChessEngineData,
     EnginePositionAnalysisResult,
 )
 from chess_reporter.chess_engine.chess_engine_instance import ChessEngineInstance
 from chess_reporter.chess_engine.chess_engine_parameters import ChessEngineParameters
-from chess_reporter.database.database_domain import Query
 from chess_reporter.database.database_manager import DatabaseManager
 
 if TYPE_CHECKING:
@@ -39,13 +42,13 @@ class ChessEngineManager:
         """
         Initializes the ChessEngineManager.
         """
-        self.__logger: Logger = logger.bind(name="chess-reporter")
+        self._logger: Logger = logger.bind(name="chess-reporter")
         self.parameters: ChessEngineParameters = ChessEngineParameters()
         self.chess_engine_instance: ChessEngineInstance = ChessEngineInstance()
         self.data: ChessEngineData = self.chess_engine_instance.data
         self.database_manager: DatabaseManager = DatabaseManager()
 
-        self.__maintain_data__()
+        self._maintain_data()
 
     def __enter__(self) -> ChessEngineManager:
         """
@@ -74,35 +77,35 @@ class ChessEngineManager:
 
         return False
 
-    def __maintain_data__(self) -> None:
+    def _maintain_data(self) -> None:
         """
         Maintains the chess engine configuration data in the database.
         """
         try:
             quantity_sql: str = (
-                f"SELECT (COUNT(1)) AS quantity FROM {self.parameters.table_name} "
+                f"SELECT (COUNT(1)) AS quantity "
+                f"FROM {self.parameters.table_name} "
                 f"WHERE chess_engine_id = '{self.data.chess_engine_id}'"
             )
-            quantity_query: Query = self.database_manager.execute(quantity_sql)[0]
-            quantity: int = quantity_query.raw_data[0].get("quantity", 0)  # type: ignore
+            quantity: int = self.database_manager.query(quantity_sql).value
 
             if quantity == 0:
                 self.database_manager.insert(self.parameters.table_name, self.data.model_dump())
         except Exception as error:
-            self.__logger.exception(
+            self._logger.exception(
                 f"Failed to maintain chess engine configuration data in the database: {error}"
             )
             raise
 
     def get_engine_position_analysis_results(
-        self, board: Board, result: ResultType = ResultType.ONGOING
+        self, position_setup: PositionSetup
     ) -> List[EnginePositionAnalysisResult]:
         """
         Retrieves the chess engine analysis results for a given chess position.
 
         Args:
-            board (Board): The chess position for which to retrieve the analysis results.
-            result (ResultType, optional): The result of the game for the given position.
+            position_setup (PositionSetup): The setup containing the chess position
+                and analysis parameters.
 
         Returns:
             List[EnginePositionAnalysisResult]: A list of chess engine analysis
@@ -110,10 +113,12 @@ class ChessEngineManager:
         """
         engine_position_analysis_results: List[EnginePositionAnalysisResult] = []
 
-        if result is not ResultType.ONGOING:
+        if position_setup.result is not ResultType.ONGOING:
             for position_analysis_index in range(1, self.data.evaluation_runs + 1):
                 started_analysis_at: datetime = datetime.now(timezone.utc)
-                score_type: ScoreType = ScoreType.MATE if result.has_winner else ScoreType.CP
+                score_type: ScoreType = (
+                    ScoreType.MATE if position_setup.result.has_winner else ScoreType.CP
+                )
                 score_value: int = 0
                 depth: int = 0
                 seldepth: int = 0
@@ -133,11 +138,12 @@ class ChessEngineManager:
                 engine_position_analysis_results.append(position_analysis_data)
         else:
             for position_analysis_index in range(1, self.data.evaluation_runs + 1):
+                engine_setup: EngineSetup = EngineSetup(
+                    position_analysis_index=position_analysis_index,
+                    board=position_setup.board.copy(stack=False),
+                )
                 engine_position_analysis_result: EnginePositionAnalysisResult = (
-                    self.chess_engine_instance.get_engine_position_analysis_result(
-                        position_analysis_index=position_analysis_index,
-                        board=board,
-                    )
+                    self.chess_engine_instance.get_engine_position_analysis_result(engine_setup)
                 )
                 engine_position_analysis_results.append(engine_position_analysis_result)
 

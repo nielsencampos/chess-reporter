@@ -48,9 +48,9 @@ def setup_logger(level: str = "DEBUG") -> None:
     logger.add(
         logger_file_name,
         level=level,
-        rotation="10 MB",  # novo arquivo a cada 10MB
-        retention="7 days",  # mantém logs por 7 dias
-        compression="zip",  # comprime logs antigos
+        rotation="8 MB",
+        retention="7 days",
+        compression="zip",
     )
 
 

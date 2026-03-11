@@ -11,11 +11,8 @@ from typing import TYPE_CHECKING, List
 from loguru import logger
 
 from chess_reporter.chess_domain.chess_domain import PositionSetup, ScoreType, TurnType
-from chess_reporter.chess_engine.chess_engine_domain import (
-    EnginePositionAnalysisResult,
-)
+from chess_reporter.chess_engine.chess_engine_domain import EnginePositionAnalysisResult
 from chess_reporter.chess_engine.chess_engine_manager import ChessEngineManager
-from chess_reporter.database.database_domain import Query
 from chess_reporter.position.position_domain import (
     AggregatedPositionResults,
     PositionAnalysisContext,
@@ -42,8 +39,8 @@ class PositionManager:
         """
         Initializes the PositionManager.
         """
-        self.__logger: Logger = logger.bind(name="chess-reporter")
-
+        self._logger: Logger = logger.bind(name="chess-reporter")
+        self._setup: PositionSetup = setup
         self.chess_engine_manager: ChessEngineManager = chess_engine_manager
         self.parameters: PositionParameters = PositionParameters()
         self.context: PositionAnalysisContext = PositionAnalysisContext(
@@ -52,12 +49,11 @@ class PositionManager:
             turn=setup.turn,
             termination=setup.termination,
             result=setup.result,
-            board=setup.board.copy(stack=False),
         )
 
-        self.__maintain_data__()
+        self._maintain_data()
 
-    def __get_engine_position_analysis_results__(self) -> List[EnginePositionAnalysisResult]:
+    def _get_engine_position_analysis_results(self) -> List[EnginePositionAnalysisResult]:
         """
         Retrieves the chess engine analysis results for the current chess position in the context.
 
@@ -66,14 +62,12 @@ class PositionManager:
                 current position.
         """
         engine_position_analysis_results: List[EnginePositionAnalysisResult] = (
-            self.chess_engine_manager.get_engine_position_analysis_results(
-                board=self.context.board.copy(stack=False), result=self.context.result
-            )
+            self.chess_engine_manager.get_engine_position_analysis_results(self._setup)
         )
 
         return engine_position_analysis_results.copy()
 
-    def __aggregate_position_results__(
+    def _aggregate_position_results(
         self, engine_position_analysis_results: List[EnginePositionAnalysisResult]
     ) -> AggregatedPositionResults:
         """
@@ -169,37 +163,29 @@ class PositionManager:
 
         return aggregated_position_results
 
-    def __maintain_data__(self) -> None:
+    def _maintain_data(self) -> None:
         """
         Maintains the chess engine configuration data in the database.
         """
         try:
-            position_table = self.parameters.position_table_name
-            position_analysis_table = self.parameters.position_analysis_table_name
             position_id = self.context.position_id
 
             position_quantity_sql: str = (
-                f"SELECT (COUNT(1)) AS quantity FROM {position_table} "
-                f"WHERE position_id = '{position_id}'"
+                f"SELECT (COUNT(1)) AS quantity FROM "
+                f"{self.parameters.position_table_name} "
+                f"WHERE position_id = '{self.context.position_id}'"
             )
             position_analysis_quantity_sql: str = (
-                f"SELECT (COUNT(1)) AS quantity FROM {position_analysis_table} "
-                f"WHERE position_id = '{position_id}'"
+                "SELECT (COUNT(1)) AS quantity FROM "
+                f"{self.parameters.position_analysis_table_name} "
+                f"WHERE position_id = '{self.context.position_id}'"
             )
-            position_quantity_result = self.chess_engine_manager.database_manager.execute(
+            position_quantity: int = self.chess_engine_manager.database_manager.query(
                 position_quantity_sql
-            )
-            position_quantity_query: Query = position_quantity_result[0]
-            position_analysis_quantity_result = self.chess_engine_manager.database_manager.execute(
+            ).value
+            position_analysis_quantity: int = self.chess_engine_manager.database_manager.query(
                 position_analysis_quantity_sql
-            )
-            position_analysis_quantity_query: Query = position_analysis_quantity_result[0]
-            position_quantity: int = (
-                position_quantity_query.raw_data[0].get("quantity", 0)  # type: ignore
-            )
-            position_analysis_quantity: int = (
-                position_analysis_quantity_query.raw_data[0].get("quantity", 0)  # type: ignore
-            )
+            ).value
 
             if (
                 position_quantity == 1
@@ -214,18 +200,14 @@ class PositionManager:
                 position_analysis_sql: str = (
                     f"SELECT * FROM {position_analysis_table} WHERE position_id = '{position_id}'"
                 )
-                position_query: Query = self.chess_engine_manager.database_manager.execute(
-                    position_sql
-                )[0]
-                position_analysis_query: Query = self.chess_engine_manager.database_manager.execute(
-                    position_analysis_sql
-                )[0]
-                self.position_data: PositionData = (
-                    PositionData.model_validate(position_query.raw_data[0])  # type: ignore
+                self.position_data: PositionData = PositionData.model_validate(
+                    self.chess_engine_manager.database_manager.query(position_sql).row
                 )
                 self.position_analysis_data: List[PositionAnalysisData] = [
                     PositionAnalysisData.model_validate(position_analysis)
-                    for position_analysis in position_analysis_query.raw_data  # type: ignore
+                    for position_analysis in self.chess_engine_manager.database_manager.query(
+                        position_analysis_sql
+                    ).raw_data
                 ]
             else:
                 position_delete_sql: str = (
@@ -240,9 +222,9 @@ class PositionManager:
                 self.chess_engine_manager.database_manager.execute(position_analysis_delete_sql)
 
                 engine_position_analysis_results: List[EnginePositionAnalysisResult] = (
-                    self.__get_engine_position_analysis_results__()
+                    self._get_engine_position_analysis_results()
                 )
-                median_score: AggregatedPositionResults = self.__aggregate_position_results__(
+                median_score: AggregatedPositionResults = self._aggregate_position_results(
                     engine_position_analysis_results=engine_position_analysis_results
                 )
                 self.position_data: PositionData = PositionData(
@@ -296,7 +278,7 @@ class PositionManager:
                     self.parameters.position_analysis_table_name, position_analysis_data_dicts
                 )
         except Exception as error:
-            self.__logger.exception(
+            self._logger.exception(
                 f"Failed to maintain chess engine configuration data in the database: {error}"
             )
             raise

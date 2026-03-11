@@ -27,8 +27,8 @@ class StorageBootstrapper:
         """
         Initializes the StorageBootstrapper.
         """
-        self.__logger: Logger = logger.bind(name="chess-reporter")
-        self.__parameters: StorageParameters = StorageParameters()
+        self._logger: Logger = logger.bind(name="chess-reporter")
+        self._parameters: StorageParameters = StorageParameters()
 
     def bootstrap(self) -> None:
         """
@@ -37,12 +37,12 @@ class StorageBootstrapper:
         and subfolders, checks if they exist, and creates them if they do not exist,
         while logging the actions taken.
         """
-        for folder_name in self.__parameters.folders:
-            for subfolder_name in self.__parameters.subfolders:
-                folder_path: Path = self.__parameters.path / folder_name / subfolder_name
+        for folder_name in self._parameters.folders:
+            for subfolder_name in self._parameters.subfolders:
+                folder_path: Path = self._parameters.path / folder_name / subfolder_name
 
                 if not folder_path.exists():
                     folder_path.mkdir(parents=True, exist_ok=True)
-                    self.__logger.info("Created storage folder at path: {}", folder_path)
+                    self._logger.info("Created storage folder at path: {}", folder_path)
                 else:
-                    self.__logger.info("Storage folder already exists at path: {}", folder_path)
+                    self._logger.info("Storage folder already exists at path: {}", folder_path)

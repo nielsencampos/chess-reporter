@@ -34,10 +34,10 @@ class StorageManager:
         """
         Initializes the StorageManager.
         """
-        self.__logger: Logger = logger.bind(name="chess-reporter")
-        self.__parameters: StorageParameters = StorageParameters()
+        self._logger: Logger = logger.bind(name="chess-reporter")
+        self._parameters: StorageParameters = StorageParameters()
 
-    def __get_folder_path(self, folder_name: str, subfolder_name: str) -> Path:
+    def _get_folder_path(self, folder_name: str, subfolder_name: str) -> Path:
         """
         Checks if the provided folder name and subfolder name are valid according to the storage
             parameters.
@@ -46,29 +46,29 @@ class StorageManager:
             folder_name (str): The name of the folder to check.
             subfolder_name (str): The name of the subfolder to check.
         """
-        if folder_name not in self.__parameters.folders:
+        if folder_name not in self._parameters.folders:
             error: str = "Invalid folder name: {}. Valid folders are: {}.".format(
-                folder_name, self.__parameters.folders
+                folder_name, self._parameters.folders
             )
 
-            self.__logger.error(error)
+            self._logger.error(error)
 
             raise ValueError(error)
 
-        if subfolder_name not in self.__parameters.subfolders:
+        if subfolder_name not in self._parameters.subfolders:
             error: str = "Invalid subfolder name: {}. Valid subfolders are: {}.".format(
-                subfolder_name, self.__parameters.subfolders
+                subfolder_name, self._parameters.subfolders
             )
 
-            self.__logger.error(error)
+            self._logger.error(error)
 
             raise ValueError(error)
 
-        folder_path: Path = self.__parameters.path / folder_name / subfolder_name
+        folder_path: Path = self._parameters.path / folder_name / subfolder_name
 
         return folder_path
 
-    def __check_file_extension(self, file_extension: str) -> None:
+    def _check_file_extension(self, file_extension: str) -> None:
         """
         Checks if the provided file extension is valid according to the storage parameters.
 
@@ -76,17 +76,17 @@ class StorageManager:
             file_extension (str): The file extension to check,
                 excluding the leading dot (e.g., "txt").
         """
-        if file_extension not in self.__parameters.all_extensions:
+        if file_extension not in self._parameters.all_extensions:
             error: str = "Invalid file extension: {}. Valid extensions are: {}.".format(
                 file_extension,
-                self.__parameters.all_extensions,
+                self._parameters.all_extensions,
             )
 
-            self.__logger.error(error)
+            self._logger.error(error)
 
             raise ValueError(error)
 
-    def __get_file_path(self, folder_name: str, subfolder_name: str, file_name: str) -> Path:
+    def _get_file_path(self, folder_name: str, subfolder_name: str, file_name: str) -> Path:
         """
         Constructs the file path for the given folder name, subfolder name, and file name, and
         checks if the file has a valid extension.
@@ -99,15 +99,15 @@ class StorageManager:
         Returns:
             Path: The constructed file path.
         """
-        folder_path: Path = self.__get_folder_path(folder_name, subfolder_name)
+        folder_path: Path = self._get_folder_path(folder_name, subfolder_name)
         file_path: Path = folder_path / file_name
         file_extension: str = file_path.suffix.replace(".", "").lower()
 
-        self.__check_file_extension(file_extension)
+        self._check_file_extension(file_extension)
 
         return file_path
 
-    def __read_file_as_string(self, file_path: Path) -> str:
+    def _read_file_as_string(self, file_path: Path) -> str:
         """
         Reads the content of the file at the provided path as a string.
 
@@ -120,28 +120,28 @@ class StorageManager:
         if not file_path.is_file():
             error: str = "File not found at path: {}.".format(file_path)
 
-            self.__logger.error(error)
+            self._logger.error(error)
 
             raise FileNotFoundError(error)
 
         file_extension: str = file_path.suffix.replace(".", "").lower()
 
-        if file_extension not in self.__parameters.string_extensions:
+        if file_extension not in self._parameters.string_extensions:
             error: str = (
                 "File at path: {} has an invalid extension: {}. Valid string extensions are: {}."
             ).format(
                 file_path,
                 file_extension,
-                self.__parameters.string_extensions,
+                self._parameters.string_extensions,
             )
 
-            self.__logger.error(error)
+            self._logger.error(error)
 
             raise ValueError(error)
 
         return file_path.read_text(encoding="utf-8")
 
-    def __read_file_as_binary(self, file_path: Path) -> bytes:
+    def _read_file_as_binary(self, file_path: Path) -> bytes:
         """
         Reads the content of the file at the provided path as binary data.
 
@@ -154,28 +154,28 @@ class StorageManager:
         if not file_path.is_file():
             error: str = "File not found at path: {}.".format(file_path)
 
-            self.__logger.error(error)
+            self._logger.error(error)
 
             raise FileNotFoundError(error)
 
         file_extension: str = file_path.suffix.replace(".", "").lower()
 
-        if file_extension not in self.__parameters.binary_extensions:
+        if file_extension not in self._parameters.binary_extensions:
             error: str = (
                 "File at path: {} has an invalid extension: {}. Valid binary extensions are: {}."
             ).format(
                 file_path,
                 file_extension,
-                self.__parameters.binary_extensions,
+                self._parameters.binary_extensions,
             )
 
-            self.__logger.exception(error)
+            self._logger.exception(error)
 
             raise ValueError(error)
 
         return file_path.read_bytes()
 
-    def __save_file_as_string(self, content: str, file_path: Path) -> None:
+    def _save_file_as_string(self, content: str, file_path: Path) -> None:
         """
         Saves the provided string content to a file at the specified path.
 
@@ -185,22 +185,22 @@ class StorageManager:
         """
         file_extension: str = file_path.suffix.replace(".", "").lower()
 
-        if file_extension not in self.__parameters.string_extensions:
+        if file_extension not in self._parameters.string_extensions:
             error: str = (
                 "File at path: {} has an invalid extension: {}. Valid string extensions are: {}."
             ).format(
                 file_path,
                 file_extension,
-                self.__parameters.string_extensions,
+                self._parameters.string_extensions,
             )
 
-            self.__logger.error(error)
+            self._logger.error(error)
 
             raise ValueError(error)
 
         file_path.write_text(content, encoding="utf-8")
 
-    def __save_file_as_binary(self, content: bytes, file_path: Path) -> None:
+    def _save_file_as_binary(self, content: bytes, file_path: Path) -> None:
         """
         Saves the provided binary content to a file at the specified path.
 
@@ -210,16 +210,16 @@ class StorageManager:
         """
         file_extension: str = file_path.suffix.replace(".", "").lower()
 
-        if file_extension not in self.__parameters.binary_extensions:
+        if file_extension not in self._parameters.binary_extensions:
             error: str = (
                 "File at path: {} has an invalid extension: {}. Valid binary extensions are: {}."
             ).format(
                 file_path,
                 file_extension,
-                self.__parameters.binary_extensions,
+                self._parameters.binary_extensions,
             )
 
-            self.__logger.error(error)
+            self._logger.error(error)
 
             raise ValueError(error)
 
@@ -241,18 +241,18 @@ class StorageManager:
             List[Path]: A list of Path objects representing the files in the specified folder
                 that match the optional file extension filter.
         """
-        folder_path: Path = self.__get_folder_path(folder_name, subfolder_name)
+        folder_path: Path = self._get_folder_path(folder_name, subfolder_name)
 
         if file_extension is not None:
-            self.__check_file_extension(file_extension)
+            self._check_file_extension(file_extension)
 
-        if file_extension is not None and file_extension not in self.__parameters.all_extensions:
+        if file_extension is not None and file_extension not in self._parameters.all_extensions:
             error: str = "Invalid file extension: {}. Valid extensions are: {}.".format(
                 file_extension,
-                self.__parameters.all_extensions,
+                self._parameters.all_extensions,
             )
 
-            self.__logger.error(error)
+            self._logger.error(error)
 
             raise ValueError(error)
 
@@ -264,7 +264,7 @@ class StorageManager:
                 file for file in files if file.suffix.replace(".", "").lower() == file_extension
             ]
         else:
-            valid_extensions = tuple(self.__parameters.all_extensions)
+            valid_extensions = tuple(self._parameters.all_extensions)
             files = [
                 file for file in files if file.suffix.replace(".", "").lower() in valid_extensions
             ]
@@ -283,7 +283,7 @@ class StorageManager:
         Returns:
             bool: True if the file exists in the specified folder and subfolder, False otherwise.
         """
-        file_path: Path = self.__get_file_path(folder_name, subfolder_name, file_name)
+        file_path: Path = self._get_file_path(folder_name, subfolder_name, file_name)
 
         return file_path.is_file()
 
@@ -299,7 +299,7 @@ class StorageManager:
         Returns:
             Path: The full path of the specified file.
         """
-        return self.__get_file_path(folder_name, subfolder_name, file_name)
+        return self._get_file_path(folder_name, subfolder_name, file_name)
 
     def delete_file(self, folder_name: str, subfolder_name: str, file_name: str) -> None:
         """
@@ -310,31 +310,31 @@ class StorageManager:
             subfolder_name (str): The name of the subfolder containing the file to delete.
             file_name (str): The name of the file to delete.
         """
-        file_path: Path = self.__get_file_path(folder_name, subfolder_name, file_name)
+        file_path: Path = self._get_file_path(folder_name, subfolder_name, file_name)
 
         if not file_path.is_file():
             error: str = "File not found at path: {}.".format(file_path)
 
-            self.__logger.error(error)
+            self._logger.error(error)
 
             raise FileNotFoundError(error)
 
         file_path.unlink()
 
     def read_file(self, folder_name: str, subfolder_name: str, file_name: str) -> Union[str, bytes]:
-        file_path: Path = self.__get_file_path(folder_name, subfolder_name, file_name)
+        file_path: Path = self._get_file_path(folder_name, subfolder_name, file_name)
         file_extension: str = file_path.suffix.replace(".", "").lower()
 
-        if file_extension in self.__parameters.string_extensions:
-            return self.__read_file_as_string(file_path)
-        elif file_extension in self.__parameters.binary_extensions:
-            return self.__read_file_as_binary(file_path)
+        if file_extension in self._parameters.string_extensions:
+            return self._read_file_as_string(file_path)
+        elif file_extension in self._parameters.binary_extensions:
+            return self._read_file_as_binary(file_path)
         else:
             error: str = "File at path: {} has an invalid extension: {}.".format(
                 file_path, file_extension
             )
 
-            self.__logger.error(error)
+            self._logger.error(error)
 
             raise ValueError(error)
 
@@ -351,34 +351,34 @@ class StorageManager:
             subfolder_name (str): The name of the subfolder to save the file in.
             file_name (str): The name of the file to save.
         """
-        file_path: Path = self.__get_file_path(folder_name, subfolder_name, file_name)
+        file_path: Path = self._get_file_path(folder_name, subfolder_name, file_name)
         file_extension: str = file_path.suffix.replace(".", "").lower()
 
-        if file_extension in self.__parameters.string_extensions:
+        if file_extension in self._parameters.string_extensions:
             if not isinstance(content, str):
                 error: str = "Content must be a string for file extension: {}.".format(
                     file_extension
                 )
 
-                self.__logger.error(error)
+                self._logger.error(error)
 
                 raise ValueError(error)
 
-            self.__save_file_as_string(content, file_path)
-        elif file_extension in self.__parameters.binary_extensions:
+            self._save_file_as_string(content, file_path)
+        elif file_extension in self._parameters.binary_extensions:
             if not isinstance(content, bytes):
                 error: str = "Content must be bytes for file extension: {}.".format(file_extension)
 
-                self.__logger.error(error)
+                self._logger.error(error)
 
                 raise ValueError(error)
 
-            self.__save_file_as_binary(content, file_path)
+            self._save_file_as_binary(content, file_path)
         else:
             error: str = "File at path: {} has an invalid extension: {}.".format(
                 file_path, file_extension
             )
 
-            self.__logger.error(error)
+            self._logger.error(error)
 
             raise ValueError(error)

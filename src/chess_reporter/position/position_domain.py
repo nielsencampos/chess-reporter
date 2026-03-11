@@ -7,8 +7,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, List
 
-from chess import Board
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import BaseModel, Field, computed_field
 
 from chess_reporter.chess_domain.chess_domain import (
     ResultType,
@@ -24,8 +23,6 @@ class PositionAnalysisContext(BaseModel):
     Data class for storing the context of a chess position analysis
     """
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     chess_engine_id: str = Field(
         description="Identifier of the chess engine used for the evaluation (FK)"
     )
@@ -35,9 +32,6 @@ class PositionAnalysisContext(BaseModel):
         description="Termination status of the position evaluation"
     )
     result: ResultType = Field(description="Result of the position evaluation")
-    board: Board = Field(
-        description="Chess position represented as a Board instance from the python-chess library"
-    )
 
     @computed_field
     @property
