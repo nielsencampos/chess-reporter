@@ -19,22 +19,27 @@ class StorageParameters(BaseModel):
     path: Path = Field(
         default_factory=lambda: Path(environ.get("STORAGE_PATH", "data/storage")),
         description="Path to the storage directory",
+        frozen=True,
     )
-    folders: Set[str] = Field(
+    parent_folder_names: Set[str] = Field(
         default={"input", "output"},
-        description="Set of folder names to be created within the storage directory",
+        description="Set of parent folder names to be created within the storage directory",
+        frozen=True,
     )
-    subfolders: Set[str] = Field(
+    child_folder_names: Set[str] = Field(
         default={"openings", "games", "others"},
-        description="Set of subfolder names to be created within each folder",
+        description="Set of child folder names to be created within each parent folder",
+        frozen=True,
     )
     binary_extensions: Set[str] = Field(
-        default={"pgn", "xlsx"},
+        default={"parquet", "pgn", "xlsx"},
         description="Set of file extensions to be treated as binary files",
+        frozen=True,
     )
     string_extensions: Set[str] = Field(
-        default={"txt", "csv", "json", "jsonl"},
+        default={"csv", "json", "txt"},
         description="Set of file extensions to be treated as string files",
+        frozen=True,
     )
 
     @property

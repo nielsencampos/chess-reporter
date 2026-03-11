@@ -269,16 +269,15 @@ class PositionManager:
                 ]
 
                 self.chess_engine_manager.database_manager.insert(
-                    self.parameters.position_table_name, self.position_data.model_dump()
+                    self.position_data.model_dump(), self.parameters.position_table_name
                 )
-                position_analysis_data_dicts = [
-                    data.model_dump() for data in self.position_analysis_data
-                ]
                 self.chess_engine_manager.database_manager.insert(
-                    self.parameters.position_analysis_table_name, position_analysis_data_dicts
+                    [data.model_dump() for data in self.position_analysis_data],
+                    self.parameters.position_analysis_table_name,
                 )
         except Exception as error:
             self._logger.exception(
                 f"Failed to maintain chess engine configuration data in the database: {error}"
             )
+
             raise

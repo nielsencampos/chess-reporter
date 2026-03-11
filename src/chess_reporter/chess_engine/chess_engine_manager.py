@@ -30,12 +30,7 @@ if TYPE_CHECKING:
 
 class ChessEngineManager:
     """
-    Manages the chess engine.
-
-    Methods:
-        get_engine_position_analysis_results: Retrieves the chess engine analysis
-            results for a given chess position.
-        close: Closes the chess engine process and releases any associated resources.
+    Manages the chess engine operations for the Chess Reporter application.
     """
 
     def __init__(self) -> None:
@@ -90,7 +85,7 @@ class ChessEngineManager:
             quantity: int = self.database_manager.query(quantity_sql).value
 
             if quantity == 0:
-                self.database_manager.insert(self.parameters.table_name, self.data.model_dump())
+                self.database_manager.insert(self.data.model_dump(), self.parameters.table_name)
         except Exception as error:
             self._logger.exception(
                 f"Failed to maintain chess engine configuration data in the database: {error}"

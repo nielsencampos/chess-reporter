@@ -4,11 +4,11 @@ Storage bootstrapper for the Chess Reporter application.
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from loguru import logger
 
+from chess_reporter.storage.storage_domain import Folder
 from chess_reporter.storage.storage_parameters import StorageParameters
 
 if TYPE_CHECKING:
@@ -37,12 +37,15 @@ class StorageBootstrapper:
         and subfolders, checks if they exist, and creates them if they do not exist,
         while logging the actions taken.
         """
-        for folder_name in self._parameters.folders:
-            for subfolder_name in self._parameters.subfolders:
-                folder_path: Path = self._parameters.path / folder_name / subfolder_name
+        for parent_folder_name in self._parameters.parent_folder_names:
+            for child_folder_name in self._parameters.child_folder_names:
+                folder: Folder = Folder(
+                    parent_folder_name=parent_folder_name,
+                    child_folder_name=child_folder_name,
+                )
 
-                if not folder_path.exists():
-                    folder_path.mkdir(parents=True, exist_ok=True)
-                    self._logger.info("Created storage folder at path: {}", folder_path)
+                if folder.exists:
+                    self._logger.info("Storage folder already exists at path: {}", folder.path)
                 else:
-                    self._logger.info("Storage folder already exists at path: {}", folder_path)
+                    folder.path.mkdir(parents=True, exist_ok=True)
+                    self._logger.info("Created storage folder at path: {}", folder.path)

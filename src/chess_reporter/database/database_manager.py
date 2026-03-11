@@ -21,17 +21,7 @@ if TYPE_CHECKING:
 
 class DatabaseManager:
     """
-    Manages the connection to the DuckDB database.
-
-    Methods:
-        connection: Provides access to the DuckDB database connection.
-        close: Closes the database connection if it is established.
-        execute: Executes a raw SQL query on the database and returns a list of Query objects
-            representing the executed queries, including their types, expressions, and result data
-            if applicable.
-        insert_data: Inserts data into a specified table in the DuckDB database, accepting
-            various formats of input data, including pandas DataFrames, lists of dictionaries, and
-            single dictionaries representing rows of data.
+    Manages the database operations for the Chess Reporter application.
     """
 
     def __init__(self) -> None:
@@ -83,6 +73,7 @@ class DatabaseManager:
             self._logger.exception(
                 "Failed to create parent directory for database file `{}`", self._parameters.path
             )
+
             raise
 
         try:
@@ -93,6 +84,7 @@ class DatabaseManager:
             )
         except Exception:
             self._logger.exception("An error occurred while establishing the database connection")
+
             raise
 
     @property
@@ -106,6 +98,7 @@ class DatabaseManager:
             error: str = "Database connection is not established"
 
             self._logger.error(error)
+
             raise RuntimeError(error)
 
         return self._connection
@@ -158,6 +151,7 @@ class DatabaseManager:
             error: str = "Unsupported SQL query type for statement `{}`" % sql
 
             self._logger.error(error)
+
             raise ValueError(error)
 
     def _execute_expression(self, query: Query) -> Optional[DataFrame]:
@@ -190,6 +184,7 @@ class DatabaseManager:
             self._logger.exception(
                 "An error occurred while executing the SQL query on the database"
             )
+
             raise
 
     def _execute(self, sql: str) -> List[Query]:
@@ -208,6 +203,7 @@ class DatabaseManager:
             error: str = "SQL query must be a valid non-empty string."
 
             self._logger.error(error)
+
             raise ValueError(error)
 
         try:
@@ -217,6 +213,7 @@ class DatabaseManager:
                 error: str = "Failed to parse SQL query: No valid SQL statements found."
 
                 self._logger.error(error)
+
                 raise ValueError(error)
 
             queries_statements: List[Query] = []
@@ -226,6 +223,7 @@ class DatabaseManager:
                     error: str = "Failed to parse SQL query: Invalid SQL statement found."
 
                     self._logger.error(error)
+
                     raise ValueError(error)
 
                 query_type: QueryType = self._get_query_type(expression)
@@ -238,6 +236,7 @@ class DatabaseManager:
             return queries_statements.copy()
         except Exception:
             self._logger.exception("Failed to parse SQL query `{}`", sql)
+
             raise
 
     def execute(self, sql: str) -> List[Query]:
@@ -272,35 +271,39 @@ class DatabaseManager:
             error: str = "Failed to execute SQL query: No valid SQL statements found."
 
             self._logger.error(error)
+
             raise ValueError(error)
         elif len(queries) > 1:
             error: str = "Failed to execute SQL query: Multiple SQL statements found."
 
             self._logger.error(error)
+
             raise ValueError(error)
 
         return queries[0]
 
-    def _insert_df(self, table_name: str, df: DataFrame) -> None:
+    def _insert_df(self, df: DataFrame, table_name: str) -> None:
         """
         Inserts data from a pandas DataFrame into a specified table in the DuckDB database.
 
         Args:
-            table_name (str):
-                The name of the target table in the database where the data should be inserted.
             df (DataFrame):
                 A pandas DataFrame containing the data to be inserted into the database.
+            table_name (str):
+                The name of the target table in the database where the data should be inserted.
         """
         if not isinstance(table_name, str) or table_name.strip() == "":
             error: str = "Table name must be a valid non-empty string."
 
             self._logger.error(error)
+
             raise ValueError(error)
 
         if not isinstance(df, DataFrame) or df.empty:
             error: str = "DataFrame must be a valid non-empty pandas DataFrame."
 
             self._logger.error(error)
+
             raise ValueError(error)
 
         try:
@@ -312,24 +315,26 @@ class DatabaseManager:
             self.connection.unregister("_insert_tmp")
         except Exception:
             self._logger.exception("An error occurred while inserting data into the database")
+
             raise
 
-    def _insert_data(self, table_name: str, data: List[Dict[str, Any]]) -> None:
+    def _insert_data(self, data: List[Dict[str, Any]], table_name: str) -> None:
         """
         Inserts data from a list of dictionaries into a specified table in the DuckDB database.
 
         Args:
-            table_name (str):
-                The name of the target table in the database where the data should be inserted.
             data (List[Dict[str, Any]]):
                 A list of dictionaries, where each dictionary represents a row of data to be
                 inserted into the database, with keys corresponding to column names and values
                 corresponding to the data for those columns.
+            table_name (str):
+                The name of the target table in the database where the data should be inserted.
         """
         if not isinstance(data, list) or len(data) == 0:
             error: str = "Data must be a valid non-empty list of dictionaries."
 
             self._logger.error(error)
+
             raise ValueError(error)
 
         if not all(isinstance(row, dict) for row in data):
@@ -339,50 +344,54 @@ class DatabaseManager:
             )
 
             self._logger.error(error)
+
             raise ValueError(error)
 
         try:
             df: DataFrame = DataFrame(data)
-            self._insert_df(table_name=table_name, df=df)
+            self._insert_df(df, table_name)
         except Exception:
             self._logger.exception("An error occurred while inserting data into the database")
+
             raise
 
-    def _insert_row(self, table_name: str, row: Dict[str, Any]) -> None:
+    def _insert_row(self, row: Dict[str, Any], table_name: str) -> None:
         """
         Inserts a single row of data, represented as a dictionary, into a specified table in the
             DuckDB database.
 
         Args:
-            table_name (str):
-                The name of the target table in the database where the data should be inserted.
             row (Dict[str, Any]):
                 A dictionary representing a single row of data to be inserted into the database,
                 with keys corresponding to column names and values corresponding to the data for
                 those columns.
+            table_name (str):
+                The name of the target table in the database where the data should be inserted.
         """
         if not isinstance(row, dict) or len(row) == 0:
             error: str = "Row must be a valid non-empty dictionary."
 
             self._logger.error(error)
+
             raise ValueError(error)
 
         try:
-            self._insert_data(table_name=table_name, data=[row])
+            self._insert_data([row], table_name)
         except Exception:
             self._logger.exception("An error occurred while inserting data into the database")
+
             raise
 
     @overload
-    def insert(self, table_name: str, data: DataFrame) -> None: ...
+    def insert(self, data: DataFrame, table_name: str) -> None: ...
 
     @overload
-    def insert(self, table_name: str, data: List[Dict[str, Any]]) -> None: ...
+    def insert(self, data: List[Dict[str, Any]], table_name: str) -> None: ...
 
     @overload
-    def insert(self, table_name: str, data: Dict[str, Any]) -> None: ...
+    def insert(self, data: Dict[str, Any], table_name: str) -> None: ...
 
-    def insert(self, table_name: str, data: Any) -> None:
+    def insert(self, data: Any, table_name: str) -> None:
         """
         Inserts data into a specified table in the DuckDB database, accepting various formats of
         input data.
@@ -393,21 +402,21 @@ class DatabaseManager:
         appropriate helper methods based on the type of the input data.
 
         Args:
-            table_name (str):
-                The name of the target table in the database where the data should be inserted.
             data (Union[DataFrame, List[Dict[str, Any]], Dict[str, Any]]):
                 The data to be inserted into the database, which can be provided in one of the
                 following formats:
                     - A pandas DataFrame containing multiple rows of data.
                     - A list of dictionaries, where each dictionary represents a row of data.
                     - A single dictionary representing a single row of data.
+            table_name (str):
+                The name of the target table in the database where the data should be inserted.
         """
         if isinstance(data, DataFrame):
-            self._insert_df(table_name, data)
+            self._insert_df(data, table_name)
         elif isinstance(data, list) and all(isinstance(row, dict) for row in data):
-            self._insert_data(table_name, data)
+            self._insert_data(data, table_name)
         elif isinstance(data, dict):
-            self._insert_row(table_name, data)
+            self._insert_row(data, table_name)
         else:
             error: str = (
                 "Data must be a valid non-empty DataFrame, a list of dictionaries, or a single "
@@ -415,4 +424,5 @@ class DatabaseManager:
             )
 
             self._logger.error(error)
+
             raise ValueError(error)

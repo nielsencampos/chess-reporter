@@ -19,9 +19,18 @@ class DatabaseParameters(BaseModel):
     path: Path = Field(
         default_factory=lambda: Path(environ.get("DATABASE_PATH", "data/database/main.duckdb")),
         description="Path to the DuckDB database file",
+        frozen=True,
     )
-    threads: int = Field(default=4, description="Number of execution threads for DuckDB")
-    memory_limit: str = Field(default="4GB", description="Maximum memory limit for DuckDB")
+    threads: int = Field(
+        default=4,
+        description="Number of execution threads for DuckDB",
+        frozen=True,
+    )
+    memory_limit: str = Field(
+        default="4GB",
+        description="Maximum memory limit for DuckDB",
+        frozen=True,
+    )
 
     @property
     def config(self) -> Dict[str, Any]:
