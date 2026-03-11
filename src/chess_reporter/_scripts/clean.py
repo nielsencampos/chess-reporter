@@ -88,13 +88,16 @@ def clean_logs(root: Path) -> None:
 
 def clean_tool_caches(root: Path) -> None:
     """
-    Cleans up tool cache directories: .pytest_cache, .ruff_cache.
+    Cleans up tool cache directories: .pytest_cache, .ruff_cache, and pytest_out.txt.
     """
     print("\n🗑️  Cleaning tool caches...")
 
     for name in (".pytest_cache", ".ruff_cache"):
         for path in root.rglob(name):
             remove_path(path)
+
+    for pytest_out in root.rglob("pytest_out.txt"):
+        remove_path(pytest_out)
 
 
 def clean_jupyter(root: Path) -> None:
