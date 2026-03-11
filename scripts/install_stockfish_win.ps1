@@ -16,8 +16,9 @@ Write-Host "Downloading Stockfish $version..."
 Invoke-WebRequest -Uri $url -OutFile $zipPath
 
 Write-Host "Extracting..."
-Expand-Archive -Path $zipPath -DestinationPath $binDir -Force
-Get-ChildItem -Path $binDir -Recurse -Filter "*.exe" | Select-Object -First 1 | Move-Item -Destination $stockfishPath
-Remove-Item $zipPath -Recurse
+$tmpDir = "$binDir\_tmp"
+Expand-Archive -Path $zipPath -DestinationPath $tmpDir -Force
+Get-ChildItem -Path $tmpDir -Recurse -Filter "*.exe" | Select-Object -First 1 | Move-Item -Destination $stockfishPath -Force
+Remove-Item $zipPath, $tmpDir -Recurse -Force
 
 Write-Host "Stockfish installed at $stockfishPath"

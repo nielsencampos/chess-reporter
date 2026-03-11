@@ -4,9 +4,7 @@ Chess game analysis pipeline using Stockfish and DuckDB, explored via JupyterLab
 
 ## What it does
 
-Chess Reporter processes PGN files and analyses each position using the Stockfish engine. Multiple Stockfish instances run in parallel (default: 5, always odd) and results are aggregated for robustness. Everything is stored in a DuckDB database and explored via JupyterLab notebooks.
-
-**Current stage:** core analysis pipeline implemented — chess engine, position manager, database and storage layers are fully operational. JupyterLab is the primary interface for running analyses.
+Processes PGN files and analyzes each position using Stockfish. Multiple engine instances run in parallel (default: 5, always odd) and results are aggregated for robustness. Data is stored in DuckDB and explored via JupyterLab.
 
 ## Stack
 
@@ -29,7 +27,7 @@ data/
     output/         # Exported results
 notebooks/          # Jupyter analysis notebooks
 src/chess_reporter/
-  chess_domain/     # Domain enums (ResultType, TerminationType, etc.)
+  chess_domain/     # Domain enums and models (ResultType, TerminationType, PositionSetup, etc.)
   chess_engine/     # Stockfish wrapper with parallel execution
   position/         # Position analysis coordinator
   database/         # DuckDB manager

@@ -41,3 +41,9 @@ Thumbs.db
 # Jupyter
 .ipynb_checkpoints/
 */.ipynb_checkpoints/
+
+# Stockfish binary (install via scripts/install_stockfish_*.ps1 or *.sh)
+bin/
+
+# Test output
+pytest_out.txt

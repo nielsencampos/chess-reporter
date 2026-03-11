@@ -1,0 +1,11 @@
+﻿C:\Users\niels\AppData\Local\Python\pythoncore-3.14-64\python.exe : warning:
+`VIRTUAL_ENV=C:\Users\niels\AppData\Local\Python\pythoncore-3.14-64` does not match the project environment path
+`.venv` and will be ignored; use `--active` to target the active environment instead
+No C:\Users\niels\OneDrive\Documentos\WindowsPowerShell\Microsoft.PowerShell_profile.ps1:1 caractere:15
++ ... nction uv { C:\Users\niels\AppData\Local\Python\pythoncore-3.14-64\py ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: `VIRTU...ronment instead:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+....................                                                     [100%]
+20 passed in 0.14s

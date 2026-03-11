@@ -33,8 +33,21 @@ uv run clean
 uv run pre-commit run --all-files
 ```
 
-### Stockfish (local development on Windows)
-The binary is at `bin/stockfish.exe`. The path is resolved via `STOCKFISH_PATH` env var or auto-detected by `src/chess_reporter/utils/utils.py:get_chess_engine_path`.
+### Stockfish (local development)
+
+The binary lives in `bin/` (gitignored). Path is resolved via `STOCKFISH_PATH` env var or auto-detected by `src/chess_reporter/utils/utils.py:get_chess_engine_path`.
+
+Install scripts (run from the project root):
+
+```powershell
+# Windows
+.\scripts\install_stockfish_win.ps1
+```
+
+```bash
+# Linux / macOS (builds from source — requires g++ or clang++)
+bash scripts/install_stockfish_unix.sh
+```
 
 ## Architecture
 
@@ -42,12 +55,13 @@ The application is a chess game analysis pipeline using Stockfish + DuckDB, expo
 
 ### Module structure under `src/chess_reporter/`
 
-- **`bootstrap.py`** — Entry point for initializing storage and database. Sets up loguru logger (stdout + rotating file in `logs/`).
-- **`chess_domain/`** — Pure domain enums: `ScoreType`, `TurnType`, `TerminationType`, `ResultType`. No external dependencies.
+- **`bootstrap.py`** — Entry point for initializing storage and database. Calls `setup_logger` from `utils/utils.py` when run as `__main__`.
+- **`chess_domain/`** — Domain enums and Pydantic models: `ScoreType`, `TurnType`, `TerminationType`, `ResultType`, `PositionSetup`, `EngineSetup`.
 - **`chess_engine/`** — Stockfish wrapper. `ChessEngineManager` spawns N `ChessEngineInstance` objects (default `evaluation_runs=5`, must be odd) and runs them in parallel via `ThreadPoolExecutor` + `asyncio`. Results are aggregated for robustness.
 - **`position/`** — `PositionManager` coordinates a `ChessEngineManager` + `Board` to analyze a position. Validates consistency between `TerminationType` and `ResultType`.
 - **`database/`** — `DatabaseManager` wraps DuckDB at `data/database/main.duckdb`. Parses SQL via `sqlglot` (dialect: `duckdb`), classifies query types (DQL/DML/DDL/DCL), returns `Query` domain objects. SQL schema/table definitions live in `database/sqls/`.
 - **`storage/`** — File system layer for PGN/XLSX/CSV/JSON inputs and outputs. Root at `data/storage/{input,output}/{openings,games,others}/`.
+- **`utils/`** — Shared utilities: `setup_logger` (loguru, stdout + rotating file in `logs/`) and `generate_hash_id`.
 - **`_scripts/`** — Internal CLI scripts registered in `pyproject.toml` (currently `clean`).
 
 ### Key design patterns
@@ -55,6 +69,20 @@ The application is a chess game analysis pipeline using Stockfish + DuckDB, expo
 - All configuration uses **Pydantic `BaseModel`** with `Field` defaults. Parameters classes are the single source of truth for paths, table names, and engine settings.
 - Each manager follows a **lifecycle pattern**: instantiate → use → `close()`. Always call `close()` to release Stockfish processes and thread pools.
 - Database paths and storage paths are relative to the working directory (defaults: `data/database/main.duckdb`, `data/storage/`). In Docker/k8s, `/app/data` is a mounted PVC.
+
+### Code style conventions (tests and src)
+
+- **Imports**: always import only what is used — prefer `from module import Foo` over `import module`. Example: `from pytest import raises, fixture` instead of `import pytest`.
+- **Type annotations**: annotate all local variables explicitly. Example: `board: Board = Board()`, `q: Query = _make_query(sql)`.
+- **Docstrings**: multi-line style with a blank line after the opening `"""` and before the closing `"""`:
+  ```python
+  def foo() -> None:
+      """
+      Does something.
+      """
+  ```
+- **Spacing**: always add a blank line before `assert`, `return`, `with raises`, and `yield` statements to keep things readable and not cramped.
+- **Guard assertions**: use `assert x is not None` instead of `# type: ignore` when narrowing types — fails loudly at runtime and satisfies Pyright.
 
 ### Infrastructure
 
