@@ -1,6 +1,6 @@
 [project]
 name = "chess-reporter"
-version = "0.2.2"
+version = "0.2.3"
 description = "Cold, objective chess game analysis — per-move accuracy, termination context penalties, and opening classification, powered by Stockfish and DuckDB."
 readme = "README.md"
 requires-python = ">=3.13"

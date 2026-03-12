@@ -165,7 +165,7 @@ Versions follow a `MAJOR.MINOR.PATCH` pattern and are tagged in git. Each minor 
 | Version | Highlights |
 |---------|------------|
 | `v0.1.x` | Initial project structure — DuckDB, storage layer, Stockfish wrapper, JupyterLab in Docker/k8s. |
-| `v0.2.x` | Full test suite, standardized code style, Stockfish install scripts, CI pipeline, `DECISIONS.md`. |
+| `v0.2.x` | Full test suite, standardized code style, Stockfish install scripts, CI pipeline, `DECISIONS.md`. Architecture patterns documented (DDD, DI, SOLID, Clean Architecture). Project logo added. |
 | `v0.3.x` _(planned)_ | MoveManager, GameManager, PGN parsing, ECO openings ingestion. |
 
 ---
