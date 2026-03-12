@@ -1,36 +1,38 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 304 112" width="304" height="112">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
   <!-- Background -->
-  <rect width="304" height="112" rx="12" fill="#1a1a2e"/>
+  <rect width="1280" height="640" fill="#1a1a2e"/>
 
-  <!-- Project name (top, centered) -->
-  <text x="152" y="28" font-family="Calibri, sans-serif" font-size="26" font-weight="bold" text-anchor="middle" fill="#f0d9b5" letter-spacing="1">Chess Reporter</text>
-  <text x="152" y="46" font-family="Calibri, sans-serif" font-size="11" text-anchor="middle" fill="#b58863" letter-spacing="5">OBJECTIVE ANALYSIS</text>
+  <!-- Project name (centered vertically in top half) -->
+  <text x="640" y="220" font-family="Calibri, sans-serif" font-size="120" font-weight="bold" text-anchor="middle" fill="#f0d9b5" letter-spacing="4">Chess Reporter</text>
+  <text x="640" y="295" font-family="Calibri, sans-serif" font-size="48" text-anchor="middle" fill="#b58863" letter-spacing="22">OBJECTIVE ANALYSIS</text>
 
   <!-- Divider -->
-  <line x1="20" y1="54" x2="284" y2="54" stroke="#3a3a5c" stroke-width="1.5"/>
+  <line x1="80" y1="340" x2="1200" y2="340" stroke="#3a3a5c" stroke-width="3"/>
 
   <!-- 6 squares — Rei, Rainha, Torre, Bispo, Cavalo, Peão -->
+  <!-- Total width: 6 * 160 = 960, centered: (1280 - 960) / 2 = 160 -->
+
   <!-- Square 1: light — dark King -->
-  <rect x="20" y="62" width="44" height="44" fill="#f0d9b5"/>
-  <text x="42" y="96" font-size="34" text-anchor="middle" font-family="serif" fill="#1a1a2e">♚</text>
+  <rect x="160" y="370" width="160" height="160" fill="#f0d9b5"/>
+  <text x="240" y="500" font-size="124" text-anchor="middle" font-family="serif" fill="#1a1a2e">♚</text>
 
   <!-- Square 2: dark — white Queen -->
-  <rect x="64" y="62" width="44" height="44" fill="#b58863"/>
-  <text x="86" y="96" font-size="34" text-anchor="middle" font-family="serif" fill="#f0d9b5">♕</text>
+  <rect x="320" y="370" width="160" height="160" fill="#b58863"/>
+  <text x="400" y="500" font-size="124" text-anchor="middle" font-family="serif" fill="#f0d9b5">♕</text>
 
   <!-- Square 3: light — dark Rook -->
-  <rect x="108" y="62" width="44" height="44" fill="#f0d9b5"/>
-  <text x="130" y="96" font-size="34" text-anchor="middle" font-family="serif" fill="#1a1a2e">♜</text>
+  <rect x="480" y="370" width="160" height="160" fill="#f0d9b5"/>
+  <text x="560" y="500" font-size="124" text-anchor="middle" font-family="serif" fill="#1a1a2e">♜</text>
 
   <!-- Square 4: dark — white Bishop -->
-  <rect x="152" y="62" width="44" height="44" fill="#b58863"/>
-  <text x="174" y="96" font-size="34" text-anchor="middle" font-family="serif" fill="#f0d9b5">♗</text>
+  <rect x="640" y="370" width="160" height="160" fill="#b58863"/>
+  <text x="720" y="500" font-size="124" text-anchor="middle" font-family="serif" fill="#f0d9b5">♗</text>
 
   <!-- Square 5: light — dark Knight -->
-  <rect x="196" y="62" width="44" height="44" fill="#f0d9b5"/>
-  <text x="218" y="96" font-size="34" text-anchor="middle" font-family="serif" fill="#1a1a2e">♞</text>
+  <rect x="800" y="370" width="160" height="160" fill="#f0d9b5"/>
+  <text x="880" y="500" font-size="124" text-anchor="middle" font-family="serif" fill="#1a1a2e">♞</text>
 
   <!-- Square 6: dark — white Pawn -->
-  <rect x="240" y="62" width="44" height="44" fill="#b58863"/>
-  <text x="262" y="96" font-size="34" text-anchor="middle" font-family="serif" fill="#f0d9b5">♙</text>
+  <rect x="960" y="370" width="160" height="160" fill="#b58863"/>
+  <text x="1040" y="500" font-size="124" text-anchor="middle" font-family="serif" fill="#f0d9b5">♙</text>
 </svg>

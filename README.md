@@ -86,7 +86,8 @@ chess-reporter/
 │   └── workflows/
 │       └── ci.yml                        # GitHub Actions — lint, type check, tests
 ├── assets/
-│   └── logo.svg                          # Project logo
+│   ├── logo.svg                          # Project logo (source)
+│   └── logo.png                          # Project logo (1280×640, GitHub social preview)
 ├── bin/                                  # Stockfish binary (gitignored)
 ├── data/                                 # Generated data (OpenData-ready)
 │   ├── database/                         # DuckDB (main.duckdb)
