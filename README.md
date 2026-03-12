@@ -1,5 +1,7 @@
 # Chess Reporter
 
+![Chess Reporter](assets/logo.svg)
+
 > Cold, objective analysis of chess games and openings — free from emotion or bias.
 
 ![Python](https://img.shields.io/badge/Python-3.13+-3776AB?logo=python&logoColor=white)
