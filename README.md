@@ -3,13 +3,15 @@
 > Cold, objective analysis of chess games and openings — free from emotion or bias.
 
 ![Python](https://img.shields.io/badge/Python-3.13+-3776AB?logo=python&logoColor=white)
-![Stockfish](https://img.shields.io/badge/Stockfish-18-darkgreen?logo=lichess&logoColor=white)
-![DuckDB](https://img.shields.io/badge/DuckDB-OLAP-FFF000?logo=duckdb&logoColor=black)
-![JupyterLab](https://img.shields.io/badge/JupyterLab-notebooks-F37626?logo=jupyter&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-container-2496ED?logo=docker&logoColor=white)
 ![Kubernetes](https://img.shields.io/badge/Kubernetes-orchestration-326CE5?logo=kubernetes&logoColor=white)
+![Chess](https://img.shields.io/badge/chess-analysis-8B4513?logo=lichess&logoColor=white)
 ![Open Data](https://img.shields.io/badge/open--data-reproducible-success)
+![JupyterLab](https://img.shields.io/badge/JupyterLab-notebooks-F37626?logo=jupyter&logoColor=white)
 ![Software Architecture](https://img.shields.io/badge/software--architecture-explicit%20domain%20modeling-blueviolet)
+![Stockfish](https://img.shields.io/badge/Stockfish-18-darkgreen?logo=lichess&logoColor=white)
+![Claude](https://img.shields.io/badge/Claude-claude--code-D97757?logo=anthropic&logoColor=white)
+![DuckDB](https://img.shields.io/badge/DuckDB-OLAP-FFF000?logo=duckdb&logoColor=black)
 
 Chess Reporter is a chess analysis pipeline built with Python and Stockfish that generates reproducible **open datasets** from objective engine evaluation. Born from a genuine passion for chess and data architecture, it evaluates every move using Stockfish, assigns an accuracy score per move, and — crucially — accounts for how the game ended.
 
@@ -48,7 +50,7 @@ Analysis is explored interactively via **JupyterLab**, and data is stored in **D
 
 The engine layer is designed for robustness, not just speed.
 
-Stockfish is non-deterministic: the same position can produce slightly different evaluations across runs. To address this, `ChessEngineManager` spawns **N engine instances** (always an odd number, default 5) and runs them in parallel via `ThreadPoolExecutor` + `asyncio`. Results are aggregated into a **median** (the definitive score), **minimum**, and **maximum**.
+Stockfish is non-deterministic: the same position can produce slightly different evaluations across runs. However, running instances in parallel causes all runs to produce identical results, eliminating variability. To preserve the natural non-determinism of the engine, `ChessEngineManager` runs **N evaluations sequentially** (always an odd number, default 5). Results are aggregated into a **median** (the definitive score), **minimum**, and **maximum**.
 
 The median was chosen over the mean for its resistance to outliers. The odd number of runs guarantees a clean median with no ambiguity.
 

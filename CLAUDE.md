@@ -57,7 +57,7 @@ The application is a chess game analysis pipeline using Stockfish + DuckDB, expo
 
 - **`bootstrap.py`** — Entry point for initializing storage and database. Calls `setup_logger` from `utils/utils.py` when run as `__main__`.
 - **`chess_domain/`** — Domain enums and Pydantic models: `ScoreType`, `TurnType`, `TerminationType`, `ResultType`, `PositionSetup`, `EngineSetup`.
-- **`chess_engine/`** — Stockfish wrapper. `ChessEngineManager` spawns N `ChessEngineInstance` objects (default `evaluation_runs=5`, must be odd) and runs them in parallel via `ThreadPoolExecutor` + `asyncio`. Results are aggregated for robustness.
+- **`chess_engine/`** — Stockfish wrapper. `ChessEngineManager` runs N `ChessEngineInstance` evaluations sequentially (default `evaluation_runs=5`, must be odd) — parallel runs produce identical results, so series execution is used to preserve variability. Results are aggregated for robustness.
 - **`position/`** — `PositionManager` coordinates a `ChessEngineManager` + `Board` to analyze a position. Validates consistency between `TerminationType` and `ResultType`.
 - **`database/`** — `DatabaseManager` wraps DuckDB at `data/database/main.duckdb`. Parses SQL via `sqlglot` (dialect: `duckdb`), classifies query types (DQL/DML/DDL/DCL), returns `Query` domain objects. SQL schema/table definitions live in `database/sqls/`.
 - **`storage/`** — File system layer for PGN/XLSX/CSV/JSON inputs and outputs. Root at `data/storage/{input,output}/{openings,games,others}/`.
