@@ -1,7 +1,5 @@
 # Chess Reporter
 
-![Chess Reporter](assets/logo.svg)
-
 > Cold, objective analysis of chess games and openings — free from emotion or bias.
 
 ![Python](https://img.shields.io/badge/Python-3.13+-3776AB?logo=python&logoColor=white)
@@ -14,6 +12,8 @@
 ![Stockfish](https://img.shields.io/badge/Stockfish-18-darkgreen?logo=lichess&logoColor=white)
 ![Claude](https://img.shields.io/badge/Claude-claude--code-D97757?logo=anthropic&logoColor=white)
 ![DuckDB](https://img.shields.io/badge/DuckDB-OLAP-FFF000?logo=duckdb&logoColor=black)
+
+![Chess Reporter](assets/logo.svg)
 
 Chess Reporter is a chess analysis pipeline built with Python and Stockfish that generates reproducible **open datasets** from objective engine evaluation. Born from a genuine passion for chess and data architecture, it evaluates every move using Stockfish, assigns an accuracy score per move, and — crucially — accounts for how the game ended.
 
@@ -85,6 +85,8 @@ chess-reporter/
 ├── .github/
 │   └── workflows/
 │       └── ci.yml                        # GitHub Actions — lint, type check, tests
+├── assets/
+│   └── logo.svg                          # Project logo
 ├── bin/                                  # Stockfish binary (gitignored)
 ├── data/                                 # Generated data (OpenData-ready)
 │   ├── database/                         # DuckDB (main.duckdb)
@@ -104,7 +106,7 @@ chess-reporter/
 │   └── install_stockfish_win.ps1         # Install Stockfish (Windows)
 ├── src/chess_reporter/
 │   ├── chess_domain/                     # Domain enums and Pydantic models
-│   ├── chess_engine/                     # Stockfish wrapper — parallel N-run orchestration
+│   ├── chess_engine/                     # Stockfish wrapper — sequential N-run orchestration
 │   ├── position/                         # Position analysis coordinator
 │   ├── database/                         # DuckDB manager + SQL parsing via sqlglot
 │   │   └── sqls/                         # schemas.sql, tables.sql
