@@ -95,7 +95,9 @@ chess-reporter/
 │       ├── input/                        # PGN, XLSX, CSV, JSON inputs
 │       └── output/                       # Exported results
 ├── docker/
-│   └── chess-reporter.Dockerfile         # Multi-stage build (Stockfish + uv + JupyterLab)
+│   ├── chess-reporter.Dockerfile         # Multi-stage build (Stockfish + uv + JupyterLab)
+│   └── startup/                          # JupyterLab startup scripts
+│       └── 00_logging.py                 # Logger initialisation on kernel start
 ├── k8s/
 │   ├── chess-reporter.yaml               # Deployment + Service (NodePort 30888)
 │   └── namespace.yaml
@@ -130,6 +132,10 @@ chess-reporter/
 - Objective analysis over subjective interpretation
 - Reproducible computation
 - Open datasets instead of locked services
+- **Domain-Driven Design** — the chess domain is the core; infrastructure (database, storage, engine) is built around it, not the other way around
+- **Dependency Injection** — managers receive dependencies explicitly at construction time; no global state, no hidden coupling
+- **SOLID** — single responsibility per manager, dependency inversion via explicit construction, interface segregation by design
+- **Clean Architecture (principled, not ceremonial)** — the dependency rule is enforced (domain knows nothing of infrastructure), without the formal layer taxonomy that only pays off at a larger scale
 - Explicit domain modeling
 
 ---
@@ -185,7 +191,9 @@ Open the URL printed in the terminal (includes the token).
 LOCAL_PATH=$(pwd) envsubst < k8s/chess-reporter.yaml | kubectl apply -f -
 ```
 
-Open `http://localhost:30888` or port-forward:
+Open `http://localhost:30888`.
+
+Or port-forward (access via `http://localhost:8888`):
 ```bash
 kubectl port-forward -n chess-reporter deployment/chess-reporter 8888:8888
 ```

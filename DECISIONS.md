@@ -66,6 +66,44 @@ All configuration, domain models, and parameters are defined as Pydantic `BaseMo
 
 ---
 
+## Architecture Patterns
+
+### Domain-Driven Design (DDD)
+
+The codebase is organized around the chess domain, not around technical layers. The `chess_domain/` module is the authoritative source for all domain concepts: `ScoreType`, `TurnType`, `TerminationType`, `ResultType`, `PositionSetup`, and `EngineSetup`. These are not DTOs or database rows — they are first-class domain objects that carry meaning, rules, and validation.
+
+This reflects years of experience building systems where the domain model is the core of the application, with infrastructure (database, storage, engine) built around it — not the other way around. When a domain concept changes, it changes in one place and the rest of the system adapts to it.
+
+The ubiquitous language from chess is preserved throughout the codebase: positions are analyzed, moves are evaluated, terminations are classified. There is no artificial mapping between a "chess world" and a "technical world" — the domain speaks for itself.
+
+### Dependency Injection (DI)
+
+Managers receive their dependencies explicitly at construction time rather than resolving them internally or relying on global state. `PositionManager` takes a `ChessEngineManager` and a `Board`; `DatabaseManager` takes a path. Configuration flows in through Pydantic parameter objects — not environment variable lookups scattered across modules.
+
+This makes the system testable (dependencies can be controlled in tests), auditable (the dependency graph is visible just by reading constructors), and composable (managers can be assembled differently for different contexts — Docker, local dev, tests).
+
+The lifecycle pattern (`instantiate → use → close()`) is a direct consequence of explicit injection: when you own the dependency, you are responsible for releasing it cleanly. This is enforced consistently across all managers.
+
+### SOLID
+
+SOLID principles are applied throughout, with the most visible being:
+
+- **Single Responsibility**: each manager owns exactly one concern — `ChessEngineManager` runs the engine, `DatabaseManager` speaks to DuckDB, `StorageManager` handles files, `PositionManager` coordinates analysis. No manager bleeds into another's domain.
+- **Open/Closed**: Pydantic parameter classes act as contracts. Adding new configuration or behavior means extending the model — not rewriting existing logic.
+- **Interface Segregation**: managers expose only what is needed for their context. There are no "god interfaces" that bundle unrelated operations.
+- **Dependency Inversion**: the highest-level managers depend on abstractions passed in at construction time, never on concrete internal instantiations. This is what makes the system testable and the dependency graph explicit.
+- **Liskov Substitution**: less prominent here due to the deliberate avoidance of deep inheritance hierarchies — which is itself a conscious choice aligned with composition over inheritance.
+
+### Clean Architecture — the principle, not the ceremony
+
+Clean Architecture in its canonical form (Uncle Bob) was designed for large, multi-team systems with complex use-case orchestration, multiple entry points, and strict layer separation enforced at every level. Applying that full structure — explicit Use Case classes, Interface Adapters, Presenters — to an analytical pipeline would be over-engineering: ceremony without benefit.
+
+What this project applies is the **core principle** that Clean Architecture is built on: the **dependency rule**. The domain (`chess_domain/`) is pure and has zero knowledge of infrastructure. The infrastructure (database, storage, engine) depends on the domain — never the other way around. Domain concepts change for domain reasons only, not because a database schema changed or a file format shifted.
+
+This is a deliberate, modern take: extract the architectural value — domain isolation and clear dependency direction — without importing the full formal structure that only pays off at a different scale. The result is a system that is easier to navigate, easier to test, and easier to evolve, precisely because it respects the spirit of Clean Architecture without being enslaved to its taxonomy.
+
+---
+
 ## Code Quality
 
 ### Ruff
