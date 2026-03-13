@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field, field_validator
 
+from chess_reporter.utils.find_engine import find_engine
+
 
 class ChessEngineParameters(BaseModel):
     """
@@ -14,7 +16,7 @@ class ChessEngineParameters(BaseModel):
 
     path: str = Field(
         description="The path to the chess engine executable",
-        default="/usr/local/bin/stockfish",
+        default_factory=find_engine,
         frozen=True,
     )
     threads: int = Field(

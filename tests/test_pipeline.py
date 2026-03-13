@@ -14,11 +14,9 @@ from typing import Generator
 from chess import Board
 from pytest import fixture
 
-from chess_reporter.chess_domain.chess_domain import (
-    PositionSetup,
-    ResultType,
-    TerminationType,
-)
+from chess_reporter.chess_domain.position_setup import PositionSetup
+from chess_reporter.chess_domain.result_type import ResultType
+from chess_reporter.chess_domain.termination_type import TerminationType
 from chess_reporter.chess_engine.chess_engine_manager import ChessEngineManager
 from chess_reporter.database.database_domain import Query
 from chess_reporter.position.position_manager import PositionManager

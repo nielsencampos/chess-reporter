@@ -9,8 +9,8 @@ from typing import Any, List
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
-from chess_reporter.chess_domain.chess_domain import ScoreType
-from chess_reporter.utils.utils import generate_hash_id
+from chess_reporter.chess_domain.score_type import ScoreType
+from chess_reporter.utils.generate_hash_id import generate_hash_id
 
 
 class ChessEngineData(BaseModel):

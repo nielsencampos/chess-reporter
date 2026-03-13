@@ -5,40 +5,14 @@ Shared test fixtures.
 from __future__ import annotations
 
 from pathlib import Path
-from platform import system
-from shutil import which
-from typing import Generator, Optional
+from typing import Generator
 
 from pydantic import ConfigDict, Field
 from pytest import MonkeyPatch, fixture, skip
 
 from chess_reporter.chess_engine.chess_engine_parameters import ChessEngineParameters
 from chess_reporter.database.database_bootstrapper import DatabaseBootstrapper
-
-
-def _find_stockfish() -> Optional[str]:
-    """
-    Attempts to find the Stockfish binary in common locations.
-
-    Returns:
-        The path to the Stockfish binary if found, otherwise None.
-    """
-    if system() == "Windows":
-        win_path: Path = Path(__file__).parent.parent / "bin" / "stockfish.exe"
-        if win_path.exists():
-            return str(win_path)
-
-    found = which("stockfish")
-
-    if found:
-        return found
-
-    linux_path: Path = Path("/usr/local/bin/stockfish")
-
-    if linux_path.exists():
-        return str(linux_path)
-
-    return None
+from chess_reporter.utils.find_engine import find_engine
 
 
 @fixture
@@ -90,9 +64,9 @@ def fast_engine_params(monkeypatch: MonkeyPatch) -> None:
     Args:
         monkeypatch: pytest fixture for patching module attributes.
     """
-    stockfish_path: Optional[str] = _find_stockfish()
+    stockfish_path: str = find_engine()
 
-    if stockfish_path is None:
+    if not Path(stockfish_path).exists():
         skip("Stockfish binary not found")
 
     class _FastParams(ChessEngineParameters):

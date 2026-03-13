@@ -103,7 +103,7 @@ chess-reporter/
 │   └── namespace.yaml
 ├── logs/                                 # Rotating log files (gitignored)
 ├── notebooks/
-│   └── sandbox.ipynb                     # Interactive analysis notebook
+│   └── workspace.ipynb                   # Interactive analysis notebook
 ├── scripts/
 │   ├── install_stockfish_unix.sh         # Build Stockfish from source (Linux/macOS)
 │   └── install_stockfish_win.ps1         # Install Stockfish (Windows)

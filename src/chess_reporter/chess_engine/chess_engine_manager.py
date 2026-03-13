@@ -10,12 +10,10 @@ from typing import TYPE_CHECKING, List, Optional
 
 from loguru import logger
 
-from chess_reporter.chess_domain.chess_domain import (
-    EngineSetup,
-    PositionSetup,
-    ResultType,
-    ScoreType,
-)
+from chess_reporter.chess_domain.engine_setup import EngineSetup
+from chess_reporter.chess_domain.position_setup import PositionSetup
+from chess_reporter.chess_domain.result_type import ResultType
+from chess_reporter.chess_domain.score_type import ScoreType
 from chess_reporter.chess_engine.chess_engine_domain import (
     ChessEngineData,
     EnginePositionAnalysisResult,

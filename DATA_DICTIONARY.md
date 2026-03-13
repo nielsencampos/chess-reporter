@@ -26,7 +26,7 @@ Chess engine configuration data. Each row represents a unique engine setup used 
 | `threads` | BIGINT | NOT NULL | Number of threads configured (≥ 1) |
 | `hash_table_mb` | BIGINT | NOT NULL | Hash table size in megabytes (≥ 1024) |
 | `depth` | BIGINT | NOT NULL | Search depth (≥ 15) |
-| `evaluation_runs` | BIGINT | NOT NULL | Number of parallel evaluation runs (≥ 3, must be odd) |
+| `evaluation_runs` | BIGINT | NOT NULL | Number of sequential evaluation runs (≥ 3, must be odd) |
 | `ingested_at` | TIMESTAMP | NOT NULL | When the record was ingested (default: `CURRENT_TIMESTAMP`) |
 
 **Constraints:**
@@ -39,16 +39,18 @@ Chess engine configuration data. Each row represents a unique engine setup used 
 
 ### `chess_reporter.position`
 
-Aggregated evaluation results for a specific chess position. Each row is the statistical summary of N parallel engine runs.
+Aggregated evaluation results for a specific chess position. Each row is the statistical summary of N sequential engine runs.
 
 | Column | Type | Nullable | Description |
 |--------|------|----------|-------------|
 | `position_id` | TEXT | NOT NULL | Unique identifier (PK) |
 | `chess_engine_id` | TEXT | NOT NULL | Engine used for the evaluation (FK → `chess_engine`) |
 | `fen` | TEXT | NOT NULL | FEN string representing the position |
-| `turn` | TEXT | NOT NULL | Player to move: `white` or `black` |
 | `termination` | TEXT | NOT NULL | Termination status of the position (see values below) |
 | `result` | TEXT | NOT NULL | Result of the game: `ongoing`, `white_won`, `black_won`, `draw` |
+| `turn` | TEXT | NOT NULL | Player to move: `white` or `black` |
+| `chess960` | BOOLEAN | NOT NULL | Whether the position originates from a Chess960 (Fischer Random) game |
+| `board` | TEXT | NOT NULL | Board string representation of the position |
 | `median_score_type` | TEXT | NOT NULL | Score type of the median (definitive) eval: `cp` or `mate` |
 | `median_score_value` | BIGINT | NOT NULL | Score value of the median eval (centipawns or mate in N) |
 | `minimum_score_type` | TEXT | NOT NULL | Score type of the minimum eval: `cp` or `mate` |

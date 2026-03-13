@@ -11,7 +11,8 @@ from typing import TYPE_CHECKING, Optional
 from chess.engine import INFO_SCORE, InfoDict, Limit, PovScore, Score, SimpleEngine
 from loguru import logger
 
-from chess_reporter.chess_domain.chess_domain import EngineSetup, ScoreType
+from chess_reporter.chess_domain.engine_setup import EngineSetup
+from chess_reporter.chess_domain.score_type import ScoreType
 from chess_reporter.chess_engine.chess_engine_domain import (
     ChessEngineData,
     EnginePositionAnalysisResult,

@@ -4,7 +4,7 @@ Tests for utils module.
 
 from __future__ import annotations
 
-from chess_reporter.utils.utils import generate_hash_id
+from chess_reporter.utils.generate_hash_id import generate_hash_id
 
 
 def test_generate_hash_id_is_deterministic() -> None:

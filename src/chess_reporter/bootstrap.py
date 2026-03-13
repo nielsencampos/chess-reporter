@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from chess_reporter.database.database_bootstrapper import DatabaseBootstrapper
 from chess_reporter.storage.storage_bootstrapper import StorageBootstrapper
-from chess_reporter.utils.utils import setup_logger
+from chess_reporter.utils.setup_logger import setup_logger
 
 
 def main():

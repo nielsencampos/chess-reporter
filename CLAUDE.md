@@ -35,7 +35,7 @@ uv run pre-commit run --all-files
 
 ### Stockfish (local development)
 
-The binary lives in `bin/` (gitignored). Path is resolved via `STOCKFISH_PATH` env var or auto-detected by `src/chess_reporter/utils/utils.py:get_chess_engine_path`.
+The binary lives in `bin/` (gitignored). Path is resolved by `src/chess_reporter/utils/find_engine.py:find_engine`, used as the `default_factory` for `ChessEngineParameters.path`.
 
 Install scripts (run from the project root):
 
@@ -55,13 +55,13 @@ The application is a chess game analysis pipeline using Stockfish + DuckDB, expo
 
 ### Module structure under `src/chess_reporter/`
 
-- **`bootstrap.py`** — Entry point for initializing storage and database. Calls `setup_logger` from `utils/utils.py` when run as `__main__`.
-- **`chess_domain/`** — Domain enums and Pydantic models: `ScoreType`, `TurnType`, `TerminationType`, `ResultType`, `PositionSetup`, `EngineSetup`.
+- **`bootstrap.py`** — Entry point for initializing storage and database. Calls `setup_logger` from `utils/setup_logger.py` when run as `__main__`.
+- **`chess_domain/`** — Domain enums and Pydantic models, one file per type: `ScoreType`, `TurnType`, `TerminationType`, `ResultType`, `ClassificationType`, `PositionSetup`, `EngineSetup`, `MoveComment`, `MoveCommentElement`, `MoveCommentTitleType`.
 - **`chess_engine/`** — Stockfish wrapper. `ChessEngineManager` runs N `ChessEngineInstance` evaluations sequentially (default `evaluation_runs=5`, must be odd) — parallel runs produce identical results, so series execution is used to preserve variability. Results are aggregated for robustness.
 - **`position/`** — `PositionManager` coordinates a `ChessEngineManager` + `Board` to analyze a position. Validates consistency between `TerminationType` and `ResultType`.
 - **`database/`** — `DatabaseManager` wraps DuckDB at `data/database/main.duckdb`. Parses SQL via `sqlglot` (dialect: `duckdb`), classifies query types (DQL/DML/DDL/DCL), returns `Query` domain objects. SQL schema/table definitions live in `database/sqls/`.
 - **`storage/`** — File system layer for PGN/XLSX/CSV/JSON inputs and outputs. Root at `data/storage/{input,output}/{openings,games,others}/`.
-- **`utils/`** — Shared utilities: `setup_logger` (loguru, stdout + rotating file in `logs/`) and `generate_hash_id`.
+- **`utils/`** — Shared utilities: `setup_logger.py` (loguru, stdout + rotating file in `logs/`), `generate_hash_id.py` (SHA-512 hash from list of values), `find_engine.py` (resolves Stockfish binary path via `PATH`, common locations, and `bin/` fallback).
 - **`_scripts/`** — Internal CLI scripts registered in `pyproject.toml` (currently `clean`).
 
 ### Key design patterns

@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS chess_reporter.chess_engine (
     depth           BIGINT NOT NULL,
     evaluation_runs BIGINT NOT NULL,
     ingested_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(name, threads, hash_table_mb, depth, evaluation_runs),
     CONSTRAINT threads_valid CHECK (threads >= 1),
     CONSTRAINT hash_table_mb_valid CHECK (hash_table_mb >= 1024),
     CONSTRAINT depth_valid CHECK (depth >= 15),
@@ -39,9 +40,11 @@ CREATE TABLE IF NOT EXISTS chess_reporter.position (
     position_id             TEXT NOT NULL PRIMARY KEY,
     chess_engine_id         TEXT NOT NULL,
     fen                     TEXT NOT NULL,
-    turn                    TEXT NOT NULL,
     termination             TEXT NOT NULL,
     result                  TEXT NOT NULL,
+    turn                    TEXT NOT NULL,
+    chess960                BOOLEAN NOT NULL,
+    board                   TEXT NOT NULL,
     median_score_type       TEXT NOT NULL,
     median_score_value      BIGINT NOT NULL,
     minimum_score_type      TEXT NOT NULL,
@@ -60,7 +63,7 @@ CREATE TABLE IF NOT EXISTS chess_reporter.position (
     started_analysis_at     TIMESTAMP NOT NULL,
     finished_analysis_at    TIMESTAMP NOT NULL,
     ingested_at             TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT turn_valid CHECK (turn IN ('white', 'black')),
+    UNIQUE(chess_engine_id, fen, termination, result),
     CONSTRAINT termination_valid CHECK (termination IN (
         'ongoing',
         'abandonment', 'checkmate', 'resignation', 'timeout', 'variant',
@@ -68,6 +71,7 @@ CREATE TABLE IF NOT EXISTS chess_reporter.position (
         'insufficient_material', 'threefold_repetition', 'fifty_moves_rule', 'fivefold_repetition',
         'seventyfive_moves', 'variant_draw')),
     CONSTRAINT result_valid CHECK (result IN ('ongoing', 'white_won', 'black_won', 'draw')),
+    CONSTRAINT turn_valid CHECK (turn IN ('white', 'black')),
     CONSTRAINT median_score_type_valid CHECK (median_score_type IN ('cp', 'mate')),
     CONSTRAINT minimum_score_type_valid CHECK (minimum_score_type IN ('cp', 'mate')),
     CONSTRAINT maximum_score_type_valid CHECK (maximum_score_type IN ('cp', 'mate')),
@@ -81,12 +85,16 @@ COMMENT ON COLUMN chess_reporter.position.chess_engine_id
     IS 'Identifier of the chess engine used for the evaluation (FK)';
 COMMENT ON COLUMN chess_reporter.position.fen
     IS 'FEN string representing the chess position';
-COMMENT ON COLUMN chess_reporter.position.turn
-    IS 'Player to move: `white` or `black`';
 COMMENT ON COLUMN chess_reporter.position.termination
     IS 'Termination status of the position evaluation';
 COMMENT ON COLUMN chess_reporter.position.result
     IS 'Result of the position evaluation';
+COMMENT ON COLUMN chess_reporter.position.turn
+    IS 'Player to move: `white` or `black`';
+COMMENT ON COLUMN chess_reporter.position.chess960
+    IS 'Flag indicating the position originates from a Chess960 (Fischer Random) game';
+COMMENT ON COLUMN chess_reporter.position.board
+    IS 'Board string representation of the chess position';
 COMMENT ON COLUMN chess_reporter.position.median_score_type
     IS 'Type of the median and final score: `cp` for centipawns or `mate` for mate in N moves';
 COMMENT ON COLUMN chess_reporter.position.median_score_value

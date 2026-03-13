@@ -7,12 +7,10 @@ from __future__ import annotations
 from chess import Board
 from pytest import raises
 
-from chess_reporter.chess_domain.chess_domain import (
-    PositionSetup,
-    ResultType,
-    TerminationType,
-    TurnType,
-)
+from chess_reporter.chess_domain.position_setup import PositionSetup
+from chess_reporter.chess_domain.result_type import ResultType
+from chess_reporter.chess_domain.termination_type import TerminationType
+from chess_reporter.chess_domain.turn_type import TurnType
 
 # ---------------------------------------------------------------------------
 # TurnType
@@ -205,8 +203,8 @@ def test_position_setup_explicit_params() -> None:
     board: Board = Board()
     setup: PositionSetup = PositionSetup(
         board=board,
-        termination_parameter=TerminationType.RESIGNATION,
-        result_parameter=ResultType.WHITE_WON,
+        termination_input=TerminationType.RESIGNATION,
+        result_input=ResultType.WHITE_WON,
     )
 
     assert setup.termination == TerminationType.RESIGNATION
@@ -222,8 +220,8 @@ def test_position_setup_inconsistent_params_raises() -> None:
     with raises(ValueError):
         PositionSetup(
             board=board,
-            termination_parameter=TerminationType.CHECKMATE,
-            result_parameter=ResultType.DRAW,
+            termination_input=TerminationType.CHECKMATE,
+            result_input=ResultType.DRAW,
         )
 
 
@@ -236,5 +234,5 @@ def test_position_setup_only_one_param_raises() -> None:
     with raises(ValueError):
         PositionSetup(
             board=board,
-            termination_parameter=TerminationType.CHECKMATE,
+            termination_input=TerminationType.CHECKMATE,
         )

@@ -9,13 +9,11 @@ from typing import Any, List
 
 from pydantic import BaseModel, Field, computed_field
 
-from chess_reporter.chess_domain.chess_domain import (
-    ResultType,
-    ScoreType,
-    TerminationType,
-    TurnType,
-)
-from chess_reporter.utils.utils import generate_hash_id
+from chess_reporter.chess_domain.result_type import ResultType
+from chess_reporter.chess_domain.score_type import ScoreType
+from chess_reporter.chess_domain.termination_type import TerminationType
+from chess_reporter.chess_domain.turn_type import TurnType
+from chess_reporter.utils.generate_hash_id import generate_hash_id
 
 
 class PositionAnalysisContext(BaseModel):
@@ -27,11 +25,15 @@ class PositionAnalysisContext(BaseModel):
         description="Identifier of the chess engine used for the evaluation (FK)"
     )
     fen: str = Field(description="FEN string representing the chess position")
-    turn: TurnType = Field(description="Player to move: `white` or `black`")
     termination: TerminationType = Field(
         description="Termination status of the position evaluation"
     )
     result: ResultType = Field(description="Result of the position evaluation")
+    turn: TurnType = Field(description="Player to move: `white` or `black`")
+    chess960: bool = Field(
+        description="Flag indicating the position originates from a Chess960 (Fischer Random) game"
+    )
+    board: str = Field(description="Board string representation of the chess position")
 
     @computed_field
     @property
@@ -42,7 +44,6 @@ class PositionAnalysisContext(BaseModel):
         values: List[Any] = [
             self.chess_engine_id,
             self.fen,
-            self.turn,
             self.termination,
             self.result,
         ]
@@ -122,11 +123,15 @@ class PositionData(BaseModel):
         description="Identifier of the chess engine used for the evaluation (FK)"
     )
     fen: str = Field(description="FEN string representing the chess position")
-    turn: TurnType = Field(description="Player to move: `white` or `black`")
     termination: TerminationType = Field(
         description="Termination status of the position evaluation"
     )
     result: ResultType = Field(description="Result of the position evaluation")
+    turn: TurnType = Field(description="Player to move: `white` or `black`")
+    chess960: bool = Field(
+        description="Flag indicating the position originates from a Chess960 (Fischer Random) game"
+    )
+    board: str = Field(description="Board string representation of the chess position")
     median_score_type: ScoreType = Field(
         description=(
             "Type of the median and final score: `cp` for centipawns or `mate` for mate in N moves"

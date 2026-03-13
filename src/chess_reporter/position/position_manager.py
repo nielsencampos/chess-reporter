@@ -10,7 +10,9 @@ from typing import TYPE_CHECKING, List
 
 from loguru import logger
 
-from chess_reporter.chess_domain.chess_domain import PositionSetup, ScoreType, TurnType
+from chess_reporter.chess_domain.position_setup import PositionSetup
+from chess_reporter.chess_domain.score_type import ScoreType
+from chess_reporter.chess_domain.turn_type import TurnType
 from chess_reporter.chess_engine.chess_engine_domain import EnginePositionAnalysisResult
 from chess_reporter.chess_engine.chess_engine_manager import ChessEngineManager
 from chess_reporter.position.position_domain import (
@@ -46,9 +48,11 @@ class PositionManager:
         self.context: PositionAnalysisContext = PositionAnalysisContext(
             chess_engine_id=self.chess_engine_manager.data.chess_engine_id,
             fen=setup.fen,
-            turn=setup.turn,
             termination=setup.termination,
             result=setup.result,
+            turn=setup.turn,
+            chess960=setup.chess960,
+            board=setup.board_str,
         )
 
         self._maintain_data()
@@ -231,9 +235,11 @@ class PositionManager:
                     position_id=self.context.position_id,
                     chess_engine_id=self.context.chess_engine_id,
                     fen=self.context.fen,
-                    turn=self.context.turn,
                     termination=self.context.termination,
                     result=self.context.result,
+                    turn=self.context.turn,
+                    chess960=self.context.chess960,
+                    board=self.context.board,
                     median_score_type=median_score.median_score_type,
                     median_score_value=median_score.median_score_value,
                     minimum_score_type=median_score.minimum_score_type,
