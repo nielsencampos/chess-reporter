@@ -1,182 +1,213 @@
 """
-Tests for DatabaseManager.
+Tests for database/database_manager: DatabaseManager.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Generator
+from typing import Any
 
 from pandas import DataFrame
 from pytest import fixture, raises
 
-from chess_reporter.database.database_domain import QueryType
+from chess_reporter.database.database_domain import Query, QueryType
 from chess_reporter.database.database_manager import DatabaseManager
 
 
 @fixture
-def manager(db_path: Path) -> Generator[DatabaseManager, None, None]:  # bare DB, no bootstrap
+def manager(db_path: Path) -> DatabaseManager:
     """
-    DatabaseManager wired to a bare temp DuckDB (no schema bootstrap).
+    A DatabaseManager pointed at a fresh temp DB (non-bootstrapped, non-internal).
     """
-    m: DatabaseManager = DatabaseManager()
+    return DatabaseManager(internal=False)
 
-    yield m
 
-    m.close()
+@fixture
+def internal_manager(db: Path) -> DatabaseManager:
+    """
+    An internal DatabaseManager pointed at a fully bootstrapped DB.
+    """
+    return DatabaseManager(internal=True)
 
 
 # ---------------------------------------------------------------------------
-# Validation
+# execute / query
 # ---------------------------------------------------------------------------
+
+
+def test_execute_ddl_creates_table(manager: DatabaseManager) -> None:
+    """
+    Executing a CREATE TABLE statement succeeds.
+    """
+    queries: list[Query] = manager.execute(
+        "CREATE SCHEMA IF NOT EXISTS ws; "
+        "CREATE TABLE IF NOT EXISTS ws.test (id TEXT PRIMARY KEY, val INTEGER);"
+    )
+
+    assert len(queries) == 2
+    assert all(q.query_type == QueryType.DDL for q in queries)
+
+
+def test_execute_dql_returns_dataframe(manager: DatabaseManager) -> None:
+    """
+    A SELECT statement returns a Query with a usable DataFrame.
+    """
+    manager.execute("CREATE SCHEMA IF NOT EXISTS ws; CREATE TABLE ws.nums (n INTEGER);")
+    manager.execute("INSERT INTO ws.nums VALUES (1), (2), (3);")
+
+    queries: list[Query] = manager.execute("SELECT n FROM ws.nums ORDER BY n;")
+
+    assert len(queries) == 1
+    q: Query = queries[0]
+    assert q.query_type == QueryType.DQL
+    assert list(q.dataframe["n"]) == [1, 2, 3]
+
+
+def test_query_single_statement(manager: DatabaseManager) -> None:
+    """
+    .query() executes exactly one statement and returns a single Query.
+    """
+    manager.execute("CREATE SCHEMA IF NOT EXISTS ws; CREATE TABLE ws.x (v INTEGER);")
+    manager.execute("INSERT INTO ws.x VALUES (42);")
+
+    q: Query = manager.query("SELECT v FROM ws.x;")
+
+    assert q.value == 42
+
+
+def test_query_multiple_statements_raises(manager: DatabaseManager) -> None:
+    """
+    .query() raises when given more than one SQL statement.
+    """
+    manager.execute("CREATE SCHEMA IF NOT EXISTS ws; CREATE TABLE ws.a (v INTEGER);")
+
+    with raises(ValueError):
+        manager.query("SELECT 1; SELECT 2;")
 
 
 def test_execute_empty_sql_raises(manager: DatabaseManager) -> None:
     """
-    Tests that executing an empty SQL string raises a ValueError.
+    Executing an empty string raises ValueError.
     """
     with raises(ValueError):
         manager.execute("")
 
 
-def test_execute_whitespace_sql_raises(manager: DatabaseManager) -> None:
-    """
-    Tests that executing a whitespace-only SQL string raises a ValueError.
-    """
-    with raises(ValueError):
-        manager.execute("   ")
-
-
-def test_query_multiple_statements_raises(manager: DatabaseManager) -> None:
-    """
-    Tests that querying multiple statements raises a ValueError.
-    """
-    with raises(ValueError):
-        manager.query("SELECT 1; SELECT 2")
-
-
 # ---------------------------------------------------------------------------
-# DDL
+# create_table
 # ---------------------------------------------------------------------------
 
 
-def test_execute_ddl_create_table(manager: DatabaseManager) -> None:
+def test_create_table_from_dict(manager: DatabaseManager) -> None:
     """
-    Tests that a CREATE TABLE statement is classified as DDL.
+    create_table accepts a single dict and creates a table.
     """
-    queries = manager.execute("CREATE TABLE tbl_ddl (id INTEGER, name VARCHAR)")
+    manager.execute("CREATE SCHEMA IF NOT EXISTS ws;")
+    row: dict[str, Any] = {"id": "a1", "score": 10}
 
-    assert len(queries) == 1
-    assert queries[0].query_type == QueryType.DDL
+    manager.create_table(row, "ws.scores")
 
-
-def test_execute_ddl_drop_table(manager: DatabaseManager) -> None:
-    """
-    Tests that a DROP TABLE statement is classified as DDL.
-    """
-    manager.execute("CREATE TABLE tbl_drop (id INTEGER)")
-    queries = manager.execute("DROP TABLE tbl_drop")
-
-    assert queries[0].query_type == QueryType.DDL
-
-
-# ---------------------------------------------------------------------------
-# DML + DQL
-# ---------------------------------------------------------------------------
-
-
-def test_execute_insert_and_select(manager: DatabaseManager) -> None:
-    """
-    Tests that INSERT followed by SELECT returns a DQL query with data.
-    """
-    manager.execute("CREATE TABLE tbl_crud (id INTEGER, val VARCHAR)")
-    manager.execute("INSERT INTO tbl_crud VALUES (1, 'hello')")
-    queries = manager.execute("SELECT * FROM tbl_crud")
-
-    assert queries[0].query_type == QueryType.DQL
-    assert queries[0].value is not None
-
-
-def test_query_select_returns_single_query(manager: DatabaseManager) -> None:
-    """
-    Tests that query() returns a single Query with the expected value.
-    """
-    manager.execute("CREATE TABLE tbl_single (n INTEGER)")
-    manager.execute("INSERT INTO tbl_single VALUES (42)")
-    q = manager.query("SELECT n FROM tbl_single")
-
-    assert q.value == 42
-
-
-# ---------------------------------------------------------------------------
-# Insert overloads
-# ---------------------------------------------------------------------------
-
-
-def test_insert_dict(manager: DatabaseManager) -> None:
-    """
-    Tests that insert() accepts a dict and persists one row.
-    """
-    manager.execute("CREATE TABLE tbl_dict (id INTEGER, name VARCHAR)")
-    manager.insert({"id": 1, "name": "Alice"}, "tbl_dict")
-    q = manager.query("SELECT COUNT(1) AS cnt FROM tbl_dict")
-
+    q: Query = manager.query("SELECT COUNT(*) AS cnt FROM ws.scores;")
     assert q.value == 1
 
 
-def test_insert_list_of_dicts(manager: DatabaseManager) -> None:
+def test_create_table_from_list_of_dicts(manager: DatabaseManager) -> None:
     """
-    Tests that insert() accepts a list of dicts and persists multiple rows.
+    create_table accepts a list of dicts.
     """
-    manager.execute("CREATE TABLE tbl_list (id INTEGER)")
-    manager.insert([{"id": 1}, {"id": 2}], "tbl_list")
-    q = manager.query("SELECT COUNT(1) AS cnt FROM tbl_list")
+    manager.execute("CREATE SCHEMA IF NOT EXISTS ws;")
+    rows: list[dict[str, Any]] = [{"id": "a"}, {"id": "b"}]
 
+    manager.create_table(rows, "ws.items")
+
+    q: Query = manager.query("SELECT COUNT(*) AS cnt FROM ws.items;")
     assert q.value == 2
 
 
-def test_insert_dataframe(manager: DatabaseManager) -> None:
+def test_create_table_from_dataframe(manager: DatabaseManager) -> None:
     """
-    Tests that insert() accepts a DataFrame and persists its rows.
+    create_table accepts a DataFrame.
     """
-    manager.execute("CREATE TABLE tbl_df (x INTEGER, y INTEGER)")
-    df: DataFrame = DataFrame({"x": [10, 20], "y": [30, 40]})
-    manager.insert(df, "tbl_df")
-    q = manager.query("SELECT COUNT(1) AS cnt FROM tbl_df")
+    manager.execute("CREATE SCHEMA IF NOT EXISTS ws;")
+    df: DataFrame = DataFrame({"x": [1, 2, 3]})
 
+    manager.create_table(df, "ws.nums")
+
+    q: Query = manager.query("SELECT COUNT(*) AS cnt FROM ws.nums;")
+    assert q.value == 3
+
+
+def test_create_table_internal_raises(manager: DatabaseManager) -> None:
+    """
+    create_table on an internal (chess_reporter.*) table raises ValueError.
+    """
+    with raises(ValueError):
+        manager.create_table({"id": "x"}, "chess_reporter.anything")
+
+
+# ---------------------------------------------------------------------------
+# insert
+# ---------------------------------------------------------------------------
+
+
+def test_insert_into_external_table(manager: DatabaseManager) -> None:
+    """
+    insert appends rows to an existing external table.
+    """
+    manager.execute("CREATE SCHEMA IF NOT EXISTS ws; CREATE TABLE ws.vals (id TEXT);")
+
+    manager.insert({"id": "row1"}, "ws.vals")
+    manager.insert({"id": "row2"}, "ws.vals")
+
+    q: Query = manager.query("SELECT COUNT(*) AS cnt FROM ws.vals;")
     assert q.value == 2
 
 
-def test_insert_invalid_type_raises(manager: DatabaseManager) -> None:
+def test_insert_internal_table_raises(manager: DatabaseManager) -> None:
     """
-    Tests that insert() raises ValueError for an unsupported type.
+    insert on an internal table raises ValueError.
     """
-    manager.execute("CREATE TABLE tbl_invalid (id INTEGER)")
-
     with raises(ValueError):
-        manager.insert("not a valid type", "tbl_invalid")  # type: ignore
-
-
-def test_insert_empty_df_raises(manager: DatabaseManager) -> None:
-    """
-    Tests that insert() raises ValueError for an empty DataFrame.
-    """
-    manager.execute("CREATE TABLE tbl_empty_df (id INTEGER)")
-
-    with raises(ValueError):
-        manager.insert(DataFrame(), "tbl_empty_df")
+        manager.insert({"id": "x"}, "chess_reporter.status")
 
 
 # ---------------------------------------------------------------------------
-# Context manager
+# merge
 # ---------------------------------------------------------------------------
 
 
-def test_context_manager_closes_connection(db_path: Path) -> None:
+def test_merge_internal_table_requires_internal_flag(db: Path) -> None:
     """
-    Tests that the context manager closes the connection without raising.
+    merge on an internal table with internal=False raises ValueError.
     """
-    with DatabaseManager() as m:
-        m.execute("CREATE TABLE tbl_ctx (id INTEGER)")
+    non_internal: DatabaseManager = DatabaseManager(internal=False)
 
-    assert m._connection is None or True  # connection closed, no exception raised
+    with raises(ValueError):
+        non_internal.merge({"id": "pending"}, "chess_reporter.status")
+
+
+def test_merge_external_table_raises(db: Path) -> None:
+    """
+    merge on an external (non-internal) table raises ValueError even with internal=True.
+    """
+    mgr: DatabaseManager = DatabaseManager(internal=True)
+    mgr.execute("CREATE SCHEMA IF NOT EXISTS ws; CREATE TABLE ws.t (id TEXT);")
+
+    with raises(ValueError):
+        mgr.merge({"id": "x"}, "ws.t")
+
+
+# ---------------------------------------------------------------------------
+# context manager
+# ---------------------------------------------------------------------------
+
+
+def test_database_manager_context_manager(db_path: Path) -> None:
+    """
+    DatabaseManager works correctly as a context manager.
+    """
+    with DatabaseManager() as mgr:
+        queries: list[Query] = mgr.execute("SELECT 1 AS n;")
+
+        assert len(queries) == 1
+        assert queries[0].value == 1

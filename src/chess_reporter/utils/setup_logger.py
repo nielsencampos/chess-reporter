@@ -1,5 +1,5 @@
 """
-Utils: Setup Logger
+Utils package: Setup logger module
 """
 
 from __future__ import annotations

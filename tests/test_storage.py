@@ -24,13 +24,13 @@ def storage(tmp_path: Path, monkeypatch: MonkeyPatch) -> StorageManager:
     """
     monkeypatch.setenv("STORAGE_PATH", str(tmp_path))
     for parent in ("input", "output"):
-        for child in ("openings", "games", "others"):
+        for child in ("opening", "game", "other"):
             (tmp_path / parent / child).mkdir(parents=True)
 
     return StorageManager()
 
 
-def _file(file_name: str, parent: str = "output", child: str = "others") -> File:
+def _file(file_name: str, parent: str = "output", child: str = "other") -> File:
     """
 
     Builds a File domain object pointing to the given path within the temp storage.

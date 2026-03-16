@@ -32,18 +32,18 @@ Python was chosen for its accessibility, rich ecosystem, and lack of a compilati
 
 ## Chess Engine
 
-### Stockfish + ChessEngineManager + PositionManager
+### Stockfish + EngineManager
 
 Stockfish is the strongest open-source chess engine available and serves as the analysis backbone of the project.
 
 **Why run N times in series?**
-Early testing revealed that running the same position once could produce slightly different evaluations across runs — non-determinism inherent to Stockfish's internal search. However, when `N` engine instances were run in parallel, all runs produced identical results for the same position, eliminating any variability. Running the same position in series (one after another) was what actually produced different evaluations across runs, preserving the natural non-determinism of the engine. To address this, `ChessEngineManager` runs `N` evaluations sequentially (always an odd number, default `5`). The results are aggregated into a **median** (used as the definitive score), **minimum**, and **maximum** — giving a statistical picture of the evaluation rather than a single potentially noisy value. The odd number of runs guarantees a clean median with no ambiguity.
+Early testing revealed that running the same position once could produce slightly different evaluations across runs — non-determinism inherent to Stockfish's internal search. However, when `N` engine instances were run in parallel, all runs produced identical results for the same position, eliminating any variability. Running the same position in series (one after another) was what actually produced different evaluations across runs, preserving the natural non-determinism of the engine. To address this, `EngineManager` runs `N` evaluations sequentially (always an odd number, default `5`). The results are aggregated into a **median** (used as the definitive score), **minimum**, and **maximum** — giving a statistical picture of the evaluation rather than a single potentially noisy value. The odd number of runs guarantees a clean median with no ambiguity.
 
 **Why the median?**
 The median is more robust than the mean against outliers. It is the value that will be used to compute move accuracy — by comparing the median eval before and after a move, a score between 0 and 100% (float) will be assigned to each move. The min/max values are preserved for future features.
 
 **Avoiding redundant analysis**
-`PositionManager` coordinates `ChessEngineManager` and `Board` to ensure that positions are not re-analyzed unnecessarily — the same position with the same termination state is not re-evaluated. This avoids wasted compute and keeps analysis deterministic for caching and storage purposes.
+Positions are not re-analyzed unnecessarily — the same position with the same termination state is not re-evaluated. This avoids wasted compute and keeps analysis deterministic for caching and storage purposes.
 
 **Validation against external sources**
 Evaluations from this pipeline were compared against evals from chess.com and lichess.com across multiple positions. Results were consistent, validating the approach.
@@ -70,7 +70,7 @@ All configuration, domain models, and parameters are defined as Pydantic `BaseMo
 
 ### Domain-Driven Design (DDD)
 
-The codebase is organized around the chess domain, not around technical layers. The `chess_domain/` module is the authoritative source for all domain concepts: `ScoreType`, `TurnType`, `TerminationType`, `ResultType`, `PositionSetup`, and `EngineSetup`. These are not DTOs or database rows — they are first-class domain objects that carry meaning, rules, and validation.
+The codebase is organized around the chess domain, not around technical layers. The `domain/` package is the authoritative source for all domain concepts, organized by subdomain: `data`, `game`, `move`, `position`, `engine`. These are not DTOs or database rows — they are first-class domain objects that carry meaning, rules, and validation.
 
 This reflects years of experience building systems where the domain model is the core of the application, with infrastructure (database, storage, engine) built around it — not the other way around. When a domain concept changes, it changes in one place and the rest of the system adapts to it.
 
@@ -88,7 +88,7 @@ The lifecycle pattern (`instantiate → use → close()`) is a direct consequenc
 
 SOLID principles are applied throughout, with the most visible being:
 
-- **Single Responsibility**: each manager owns exactly one concern — `ChessEngineManager` runs the engine, `DatabaseManager` speaks to DuckDB, `StorageManager` handles files, `PositionManager` coordinates analysis. No manager bleeds into another's domain.
+- **Single Responsibility**: each manager owns exactly one concern — `EngineManager` runs the engine, `DatabaseManager` speaks to DuckDB, `StorageManager` handles files. No manager bleeds into another's domain.
 - **Open/Closed**: Pydantic parameter classes act as contracts. Adding new configuration or behavior means extending the model — not rewriting existing logic.
 - **Interface Segregation**: managers expose only what is needed for their context. There are no "god interfaces" that bundle unrelated operations.
 - **Dependency Inversion**: the highest-level managers depend on abstractions passed in at construction time, never on concrete internal instantiations. This is what makes the system testable and the dependency graph explicit.
@@ -98,7 +98,7 @@ SOLID principles are applied throughout, with the most visible being:
 
 Clean Architecture in its canonical form (Uncle Bob) was designed for large, multi-team systems with complex use-case orchestration, multiple entry points, and strict layer separation enforced at every level. Applying that full structure — explicit Use Case classes, Interface Adapters, Presenters — to an analytical pipeline would be over-engineering: ceremony without benefit.
 
-What this project applies is the **core principle** that Clean Architecture is built on: the **dependency rule**. The domain (`chess_domain/`) is pure and has zero knowledge of infrastructure. The infrastructure (database, storage, engine) depends on the domain — never the other way around. Domain concepts change for domain reasons only, not because a database schema changed or a file format shifted.
+What this project applies is the **core principle** that Clean Architecture is built on: the **dependency rule**. The domain (`domain/`) is pure and has zero knowledge of infrastructure. The infrastructure (database, storage, engine) depends on the domain — never the other way around. Domain concepts change for domain reasons only, not because a database schema changed or a file format shifted.
 
 This is a deliberate, modern take: extract the architectural value — domain isolation and clear dependency direction — without importing the full formal structure that only pays off at a different scale. The result is a system that is easier to navigate, easier to test, and easier to evolve, precisely because it respects the spirit of Clean Architecture without being enslaved to its taxonomy.
 

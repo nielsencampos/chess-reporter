@@ -1,5 +1,5 @@
 """
-Utils: Find engine
+Utils package: find engine module
 """
 
 from __future__ import annotations
@@ -11,10 +11,10 @@ from shutil import which
 
 def find_engine() -> str:
     """
-    Attempts to find the Stockfish binary in common locations.
+    Attempt to find the chess engine binary on the system.
 
     Returns:
-        The path to the Stockfish binary if found, otherwise a default path.
+        The path to the chess engine binary if found, otherwise a default path.
     """
     if system() == "Windows":
         win_path: Path = Path(__file__).parent.parent.parent.parent / "bin" / "stockfish.exe"

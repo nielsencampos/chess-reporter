@@ -78,7 +78,7 @@ The codebase is structured around **Pydantic `BaseModel`** classes as the single
 
 Code quality is enforced via **Ruff** (lint + format), **Pyright** (static typing), and **pre-commit** hooks. All variables carry explicit type annotations. Tests follow a consistent style: granular imports, multi-line docstrings, and explicit spacing.
 
-The test suite covers domain models, database operations, storage, and Stockfish integration — 63 tests, all passing. Engine tests are skipped automatically in environments without the binary (e.g., CI).
+The test suite covers domain models, database operations, storage, and Stockfish integration — 120 tests, all passing. Engine tests are skipped automatically in environments without the binary (e.g., CI).
 
 ```
 chess-reporter/
@@ -108,16 +108,20 @@ chess-reporter/
 │   ├── install_stockfish_unix.sh         # Build Stockfish from source (Linux/macOS)
 │   └── install_stockfish_win.ps1         # Install Stockfish (Windows)
 ├── src/chess_reporter/
-│   ├── chess_domain/                     # Domain enums and Pydantic models
-│   ├── chess_engine/                     # Stockfish wrapper — sequential N-run orchestration
-│   ├── position/                         # Position analysis coordinator
+│   ├── domain/                           # All domain types, organized by subdomain
+│   │   ├── data/                         # DataStatus
+│   │   ├── game/                         # GameResult, GameTermination, GameOutcome, GamePhase
+│   │   ├── move/                         # MoveClassification, MoveContext, MoveComment, …
+│   │   ├── position/                     # PositionContext, PositionMaterialInfo, …
+│   │   └── engine/                       # EngineAnalysis, EngineContext, …
+│   ├── engine/                           # Stockfish wrapper — EngineManager, EngineInstance
 │   ├── database/                         # DuckDB manager + SQL parsing via sqlglot
-│   │   └── sqls/                         # schemas.sql, tables.sql
+│   │   └── sql/                          # schema/ and table/ SQL files
 │   ├── storage/                          # File system manager (PGN, XLSX, CSV, JSON)
 │   ├── utils/                            # Logging (loguru), hashing, engine path resolution
 │   ├── _scripts/                         # Internal CLI scripts (clean)
 │   └── bootstrap.py                      # Storage and database initialisation
-├── tests/                                # Full test suite (63 tests)
+├── tests/                                # Full test suite (120 tests)
 ├── CLAUDE.md                             # Claude Code instructions and conventions
 ├── DATA_DICTIONARY.md                    # Database schema documentation
 ├── DECISIONS.md                          # Architectural and tooling decisions

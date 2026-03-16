@@ -1,5 +1,5 @@
 """
-Database bootstrapper for the Chess Reporter application.
+Database package: bootstrapper module
 """
 
 from __future__ import annotations
@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from loguru import logger
 
-from chess_reporter.database.database_manager import DatabaseManager
+from .database_manager import DatabaseManager
 
 if TYPE_CHECKING:
     from loguru import Logger
@@ -17,10 +17,7 @@ if TYPE_CHECKING:
 
 class DatabaseBootstrapper:
     """
-    Bootstraps the database for the Chess Reporter application.
-
-    Methods:
-        bootstrap: Bootstraps the database by executing the SQL files for schemas and tables.
+    Database Bootstrapper
     """
 
     def __init__(self) -> None:
@@ -29,38 +26,65 @@ class DatabaseBootstrapper:
         """
         self._logger: Logger = logger.bind(name="chess-reporter")
 
-        sqls_dir: Path = Path(__file__).resolve().parent / "sqls"
+        sql_path: Path = Path(__file__).resolve().parent / "sql"
 
-        self._schemas_file_path: Path = sqls_dir / "schemas.sql"
-        self._tables_file_path: Path = sqls_dir / "tables.sql"
+        self._schema_path: Path = sql_path / "schema"
+        self._table_path: Path = sql_path / "table"
+        self._view_path: Path = sql_path / "view"
 
-        self._validate_sql_files()
-
-    def _validate_sql_files(self) -> None:
+    def _list_sql_files(self, path: Path) -> list[Path]:
         """
-        Validates the existence of the SQL files for schemas and tables.
+        Lists all SQL files in the given directory.
+
+        Args:
+            path (Path): The directory path to list SQL files from.
+
+        Returns:
+            list[Path]: A list of SQL file paths.
         """
-        if not self._schemas_file_path.exists():
-            error: str = "Schemas SQL file not found at path: {}".format(self._schemas_file_path)
+        if not path.exists() or not path.is_dir():
+            return []
 
-            self._logger.error(error)
+        return sorted(path.glob("*.sql"))
 
-            raise FileNotFoundError(error)
+    def _read_sql_file(self, file_path: Path) -> str:
+        """
+        Reads the content of an SQL file.
 
-        if not self._tables_file_path.exists():
-            error: str = "Tables SQL file not found at path: {}".format(self._tables_file_path)
+        Args:
+            file_path (Path): The path to the SQL file.
 
-            self._logger.error(error)
+        Returns:
+            str: The content of the SQL file.
+        """
+        with file_path.open("r", encoding="utf-8") as file:
+            return file.read()
 
-            raise FileNotFoundError(error)
+    def _execute_sql_files(self, database_manager: DatabaseManager, path: Path) -> None:
+        """
+        Executes all SQL files in the given directory using the provided DatabaseManager.
+
+        Args:
+            database_manager (DatabaseManager):
+                The DatabaseManager instance to execute SQL commands.
+            path (Path):
+                The directory path to list SQL files from.
+        """
+        for sql_file in self._list_sql_files(path):
+            try:
+                sql: str = self._read_sql_file(sql_file)
+
+                database_manager.execute(sql)
+            except Exception:
+                self._logger.error("Failed to execute SQL file {}", sql_file)
+
+                raise
 
     def bootstrap(self) -> None:
         """
-        Bootstraps the database by executing the SQL files for schemas and tables.
+        Bootstraps the database by executing the SQL files for schemas, tables, and views.
         """
-        schemas_sqls: str = self._schemas_file_path.read_text(encoding="utf-8")
-        tables_sqls: str = self._tables_file_path.read_text(encoding="utf-8")
-
         with DatabaseManager() as database_manager:
-            database_manager.execute(schemas_sqls)
-            database_manager.execute(tables_sqls)
+            self._execute_sql_files(database_manager, self._schema_path)
+            self._execute_sql_files(database_manager, self._table_path)
+            self._execute_sql_files(database_manager, self._view_path)

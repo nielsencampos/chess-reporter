@@ -1,20 +1,21 @@
 """
-Database domain definitions for the Chess Reporter application.
+Database package: domain module
 """
 
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Any, Dict, Hashable, List, Optional
+from typing import Any, Hashable
+from uuid import uuid4
 
 from pandas import DataFrame
-from pydantic import BaseModel, ConfigDict, Field, field_serializer
+from pydantic import BaseModel, ConfigDict, Field, RootModel, field_serializer, model_validator
 from sqlglot import Expression
 
 
 class QueryType(StrEnum):
     """
-    Enumeration of query types for the Chess Reporter application.
+    Query Type
 
     Values:
         DQL: Represents a Data Query Language query (e.g., SELECT).
@@ -31,26 +32,15 @@ class QueryType(StrEnum):
 
 class Query(BaseModel):
     """
-    Represents a database query in the Chess Reporter application.
-
-    Attributes:
-        query_type (QueryType): The type of the database query.
-        expression (Expression): The SQL expression representing the database query.
-        data (Optional[DataFrame]): Pandas DataFrame result of the query, if applicable.
-
-    Properties:
-        sql (str):
-            SQL string representation of the query expression.
-        raw_data (Optional[List[Dict[str, Any]]]):
-            List of dictionaries of data (instead of a Pandas DataFrame).
+    Query
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     query_type: QueryType = Field(description="The type of the database query")
     expression: Expression = Field(description="The SQL expression representing the database query")
-    data_returned: Optional[DataFrame] = Field(
-        default=None, description="Pandas DataFrame result of the query, if applicable"
+    dataframe_input: DataFrame | None = Field(
+        default=None, description="The DataFrame input for the query, if applicable"
     )
 
     @property
@@ -61,42 +51,42 @@ class Query(BaseModel):
         return self.expression.sql(dialect="duckdb")
 
     @property
-    def data(self) -> DataFrame:
+    def dataframe(self) -> DataFrame:
         """
-        DataFrame result
+        DataFrame representation of the query result
         """
-        if self.data_returned is None:
+        if self.dataframe_input is None:
             raise ValueError("Data is not available as a DataFrame.")
 
-        return self.data_returned.copy()
+        return self.dataframe_input
 
     @property
-    def columns(self) -> List[str]:
+    def columns(self) -> list[str]:
         """
         List of column names
         """
-        return self.data.columns.tolist().copy()
+        return self.dataframe.columns.tolist()
 
     @property
-    def raw_data(self) -> List[Dict[str, Any]]:
+    def data(self) -> list[dict[str, Any]]:
         """
         List of dictionaries of data (instead of a Pandas DataFrame)
         """
-        pandas_data: List[Dict[Hashable, Any]] = self.data.to_dict(orient="records")
-        converted_data: List[Dict[str, Any]] = [
+        pandas_data: list[dict[Hashable, Any]] = self.dataframe.to_dict(orient="records")
+        converted_data: list[dict[str, Any]] = [
             {str(key): value for key, value in record.items()} for record in pandas_data
         ]
 
-        return converted_data.copy()
+        return converted_data
 
     @property
-    def row(self) -> Dict[str, Any]:
+    def row(self) -> dict[str, Any]:
         """
         First row of the data
         """
-        first_row = self.raw_data[0] if len(self.raw_data) > 0 else {}
+        first_row = self.data[0] if len(self.data) > 0 else {}
 
-        return first_row.copy()
+        return first_row
 
     @property
     def value(self) -> Any:
@@ -113,14 +103,80 @@ class Query(BaseModel):
         """
         Serializes the SQL expression
         """
-        return self.sql
+        return expression.sql(dialect="duckdb")
 
-    @field_serializer("data_returned")
-    def serialize_data(self, data_returned: Optional[DataFrame]) -> Optional[List[Dict[str, Any]]]:
+    @field_serializer("dataframe_input")
+    def serialize_data(self, dataframe_input: DataFrame | None) -> list[dict[str, Any]] | None:
         """
         Serializes the DataFrame.
         """
-        if data_returned is None:
-            return None
+        return None if dataframe_input is None else self.data
 
-        return self.raw_data.copy()
+
+class Table(RootModel[str]):
+    """
+    Table
+    """
+
+    @model_validator(mode="before")
+    @classmethod
+    def build_table(cls, value: str) -> str:
+        """
+        Validates and constructs the table in the format `schema.table`.
+        """
+        if not isinstance(value, str):
+            raise ValueError("Table must be a string.")
+
+        full_name: str = value.strip().lower()
+        parts: list[str] = full_name.split(".")
+
+        if len(parts) != 2:
+            raise ValueError("Table must be in the format `schema.table`.")
+
+        if any(not part.isidentifier() for part in parts):
+            raise ValueError("Table components must be valid identifiers.")
+
+        return full_name
+
+    def __str__(self) -> str:
+        """
+        String representation of the table.
+        """
+        return self.root
+
+    @property
+    def parts(self) -> tuple[str, str]:
+        """
+        Returns the schema and table name as a tuple.
+        """
+        schema_name, table_name = self.root.split(".")
+
+        return schema_name, table_name
+
+    @property
+    def schema_name(self) -> str:
+        """
+        Schema name
+        """
+        return self.parts[0]
+
+    @property
+    def table_name(self) -> str:
+        """
+        Table name
+        """
+        return self.parts[1]
+
+    @property
+    def is_internal(self) -> bool:
+        """
+        Checks if the table is an internal table (e.g., starts with "chess_reporter").
+        """
+        return self.schema_name == "chess_reporter"
+
+    @property
+    def temp_name(self) -> str:
+        """
+        Returns the table name formatted for temporary table registration (e.g., without schema).
+        """
+        return f"_tmp_{self.root.replace('.', '_')}_{uuid4().hex}"

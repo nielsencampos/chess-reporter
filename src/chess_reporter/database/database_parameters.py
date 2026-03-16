@@ -1,19 +1,18 @@
 """
-Database configuration parameters for the Chess Reporter application.
+Database package: parameters module
 """
 
 from __future__ import annotations
 
 from os import environ
 from pathlib import Path
-from typing import Any, Dict
 
 from pydantic import BaseModel, Field
 
 
 class DatabaseParameters(BaseModel):
     """
-    Configuration parameters for the DuckDB database.
+    Database Parameters
     """
 
     path: Path = Field(
@@ -22,18 +21,19 @@ class DatabaseParameters(BaseModel):
         frozen=True,
     )
     threads: int = Field(
-        default=4,
+        default=2,
         description="Number of execution threads for DuckDB",
         frozen=True,
+        ge=1,
     )
     memory_limit: str = Field(
-        default="4GB",
+        default="2GB",
         description="Maximum memory limit for DuckDB",
         frozen=True,
     )
 
     @property
-    def config(self) -> Dict[str, Any]:
+    def config(self) -> dict[str, str | bool | int | float | list[str]]:
         """
         DuckDB runtime configuration parameters.
         """

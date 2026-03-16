@@ -1,140 +1,110 @@
 """
-Tests for database_domain module.
+Tests for database/database_domain: QueryType, Table.
 """
 
 from __future__ import annotations
 
-from pandas import DataFrame
 from pytest import raises
-from sqlglot import parse
 
-from chess_reporter.database.database_domain import Query, QueryType
-
-
-def _make_query(sql: str, data: DataFrame | None = None) -> Query:
-    expression = parse(sql, dialect="duckdb")[0]
-
-    assert expression is not None
-
-    return Query(query_type=QueryType.DQL, expression=expression, data_returned=data)
-
+from chess_reporter.database.database_domain import QueryType, Table
 
 # ---------------------------------------------------------------------------
-# Query.sql
+# QueryType
 # ---------------------------------------------------------------------------
 
 
-def test_query_sql_roundtrip() -> None:
+def test_query_type_values() -> None:
     """
-    Tests that the SQL string round-trips through the Query object correctly.
+    All four query types have the correct string values.
     """
-    sql: str = "SELECT 1 AS value"
-    q: Query = _make_query(sql)
-
-    assert "SELECT" in q.sql.upper()
-    assert "1" in q.sql
+    assert QueryType.DQL == "dql"
+    assert QueryType.DML == "dml"
+    assert QueryType.DDL == "ddl"
+    assert QueryType.DCL == "dcl"
 
 
 # ---------------------------------------------------------------------------
-# Query.data / raw_data / row / value — with data
+# Table
 # ---------------------------------------------------------------------------
 
 
-def test_query_data_returns_copy() -> None:
+def test_table_valid_format() -> None:
     """
-    Tests that Query.data returns a DataFrame with the expected columns.
+    A valid schema.table string produces a Table with correct parts.
     """
-    df: DataFrame = DataFrame({"a": [1, 2], "b": [3, 4]})
-    q: Query = _make_query("SELECT 1", data=df)
+    table: Table = Table("workspace.games")
 
-    assert list(q.data.columns) == ["a", "b"]
+    assert str(table) == "workspace.games"
+    assert table.schema_name == "workspace"
+    assert table.table_name == "games"
 
 
-def test_query_raw_data_is_list_of_dicts() -> None:
+def test_table_normalizes_to_lowercase() -> None:
     """
-    Tests that Query.raw_data returns a list of dictionaries.
+    Table normalizes the input to lowercase.
     """
-    df: DataFrame = DataFrame({"x": [10]})
-    q: Query = _make_query("SELECT 1", data=df)
+    table: Table = Table("Workspace.Games")
 
-    assert q.raw_data == [{"x": 10}]
+    assert str(table) == "workspace.games"
 
 
-def test_query_row_returns_first_row() -> None:
+def test_table_is_internal_true_for_chess_reporter_schema() -> None:
     """
-    Tests that Query.row returns the first row as a dictionary.
+    Tables under the chess_reporter schema are marked as internal.
     """
-    df: DataFrame = DataFrame({"v": [42, 99]})
-    q: Query = _make_query("SELECT 1", data=df)
+    table: Table = Table("chess_reporter.status")
 
-    assert q.row == {"v": 42}
+    assert table.is_internal is True
 
 
-def test_query_value_returns_first_cell() -> None:
+def test_table_is_internal_false_for_other_schemas() -> None:
     """
-    Tests that Query.value returns the first cell of the first row.
+    Tables under any other schema are not internal.
     """
-    df: DataFrame = DataFrame({"count": [7]})
-    q: Query = _make_query("SELECT 1", data=df)
+    table: Table = Table("workspace.games")
 
-    assert q.value == 7
+    assert table.is_internal is False
 
 
-def test_query_columns_returns_column_list() -> None:
+def test_table_temp_name_format() -> None:
     """
-    Tests that Query.columns returns the list of column names.
+    temp_name starts with _tmp_ and contains the table path.
     """
-    df: DataFrame = DataFrame({"a": [1], "b": [2]})
-    q: Query = _make_query("SELECT 1", data=df)
+    table: Table = Table("workspace.games")
+    temp: str = table.temp_name
 
-    assert q.columns == ["a", "b"]
-
-
-# ---------------------------------------------------------------------------
-# Query.data raises when data_returned is None
-# ---------------------------------------------------------------------------
+    assert temp.startswith("_tmp_workspace_games_")
+    assert len(temp) > len("_tmp_workspace_games_")
 
 
-def test_query_data_raises_when_none() -> None:
+def test_table_temp_name_is_unique() -> None:
     """
-    Tests that accessing Query.data raises ValueError when data_returned is None.
+    Successive calls to temp_name return different values.
     """
-    q: Query = _make_query("SELECT 1", data=None)
+    table: Table = Table("workspace.games")
 
-    with raises(ValueError):
-        _ = q.data
+    assert table.temp_name != table.temp_name
 
 
-def test_query_row_raises_when_no_data() -> None:
+def test_table_invalid_no_dot_raises() -> None:
     """
-    Tests that accessing Query.row raises ValueError when data_returned is None.
+    A string without a dot raises a validation error.
     """
-    q: Query = _make_query("SELECT 1", data=None)
-
-    with raises(ValueError):
-        _ = q.row
+    with raises(Exception):
+        Table("nodot")
 
 
-# ---------------------------------------------------------------------------
-# Serialization
-# ---------------------------------------------------------------------------
-
-
-def test_query_model_dump_serializes_expression_as_string() -> None:
+def test_table_invalid_too_many_dots_raises() -> None:
     """
-    Tests that model_dump serializes the SQL expression as a string.
+    A string with more than one dot raises a validation error.
     """
-    q: Query = _make_query("SELECT 1 AS v")
-    dumped: dict = q.model_dump()
-
-    assert isinstance(dumped["expression"], str)
+    with raises(Exception):
+        Table("a.b.c")
 
 
-def test_query_model_dump_serializes_none_data_as_none() -> None:
+def test_table_invalid_non_identifier_raises() -> None:
     """
-    Tests that model_dump serializes None data_returned as None.
+    Non-identifier components raise a validation error.
     """
-    q: Query = _make_query("SELECT 1")
-    dumped: dict = q.model_dump()
-
-    assert dumped["data_returned"] is None
+    with raises(Exception):
+        Table("123schema.table")

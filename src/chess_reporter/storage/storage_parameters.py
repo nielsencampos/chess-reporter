@@ -1,19 +1,18 @@
 """
-Storage configuration parameters for the Chess Reporter application.
+Storage package: parameters module
 """
 
 from __future__ import annotations
 
 from os import environ
 from pathlib import Path
-from typing import Set
 
 from pydantic import BaseModel, Field
 
 
 class StorageParameters(BaseModel):
     """
-    Configuration parameters for the storage system.
+    Storage Parameters
     """
 
     path: Path = Field(
@@ -21,29 +20,29 @@ class StorageParameters(BaseModel):
         description="Path to the storage directory",
         frozen=True,
     )
-    parent_folder_names: Set[str] = Field(
+    parent_folder_names: set[str] = Field(
         default={"input", "output"},
         description="Set of parent folder names to be created within the storage directory",
         frozen=True,
     )
-    child_folder_names: Set[str] = Field(
-        default={"openings", "games", "others"},
+    child_folder_names: set[str] = Field(
+        default={"opening", "game", "other"},
         description="Set of child folder names to be created within each parent folder",
         frozen=True,
     )
-    binary_extensions: Set[str] = Field(
+    binary_extensions: set[str] = Field(
         default={"parquet", "pgn", "xlsx"},
         description="Set of file extensions to be treated as binary files",
         frozen=True,
     )
-    string_extensions: Set[str] = Field(
-        default={"csv", "json", "txt"},
+    string_extensions: set[str] = Field(
+        default={"json"},
         description="Set of file extensions to be treated as string files",
         frozen=True,
     )
 
     @property
-    def all_extensions(self) -> Set[str]:
+    def all_extensions(self) -> set[str]:
         """
         Returns the set of all valid file extensions (both binary and string).
         """

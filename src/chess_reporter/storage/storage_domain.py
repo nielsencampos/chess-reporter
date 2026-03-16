@@ -1,5 +1,5 @@
 """
-Storage configuration parameters for the Chess Reporter application.
+Storage package: domain module
 """
 
 from __future__ import annotations
@@ -23,13 +23,13 @@ class Folder(BaseModel):
         """
         Validates the parent folder name and adjusts it to be lowercase and stripped of whitespace.
         """
-
         self.parent_folder_name = self.parent_folder_name.lower().strip()
+        params: StorageParameters = StorageParameters()
 
-        if self.parent_folder_name not in StorageParameters().parent_folder_names:
+        if self.parent_folder_name not in params.parent_folder_names:
             raise ValueError(
                 f"Invalid folder name: '{self.parent_folder_name}'. "
-                f"Valid options are: {StorageParameters().parent_folder_names}"
+                f"Valid options are: {params.parent_folder_names}"
             )
 
     def _validate_child_folder_name(self) -> None:
@@ -37,11 +37,12 @@ class Folder(BaseModel):
         Validates the child folder name and adjusts it to be lowercase and stripped of whitespace.
         """
         self.child_folder_name = self.child_folder_name.lower().strip()
+        params: StorageParameters = StorageParameters()
 
-        if self.child_folder_name not in StorageParameters().child_folder_names:
+        if self.child_folder_name not in params.child_folder_names:
             raise ValueError(
                 f"Invalid child folder name: '{self.child_folder_name}'. "
-                f"Valid options are: {StorageParameters().child_folder_names}"
+                f"Valid options are: {params.child_folder_names}"
             )
 
     @model_validator(mode="after")

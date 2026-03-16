@@ -1,20 +1,20 @@
 """
-Utils: Generate Hash ID
+Utils package: Generate hash ID module
 """
 
 from __future__ import annotations
 
 from hashlib import sha512
 from json import dumps
-from typing import Any, List
+from typing import Any
 
 
-def generate_hash_id(values: List[Any]) -> str:
+def generate_hash_id(values: list[Any]) -> str:
     """
     Generate a unique hash ID based on a list of values.
 
     Args:
-        values (List[Any]): A list of values to generate the hash ID from.
+        values (list[Any]): A list of values to generate the hash ID from.
 
     Returns:
         str: A unique hash ID generated from the input values.
