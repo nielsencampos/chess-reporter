@@ -78,7 +78,7 @@ The ubiquitous language from chess is preserved throughout the codebase: positio
 
 ### Dependency Injection (DI)
 
-Managers receive their dependencies explicitly at construction time rather than resolving them internally or relying on global state. `PositionManager` takes a `ChessEngineManager` and a `Board`; `DatabaseManager` takes a path. Configuration flows in through Pydantic parameter objects — not environment variable lookups scattered across modules.
+Managers receive their dependencies explicitly at construction time rather than resolving them internally or relying on global state. `EngineManager` takes `EngineParameters`; `DatabaseManager` takes a path. Configuration flows in through Pydantic parameter objects — not environment variable lookups scattered across modules.
 
 This makes the system testable (dependencies can be controlled in tests), auditable (the dependency graph is visible just by reading constructors), and composable (managers can be assembled differently for different contexts — Docker, local dev, tests).
 
@@ -165,7 +165,7 @@ Versions follow a `MAJOR.MINOR.PATCH` pattern and are tagged in git. Each minor 
 | Version | Highlights |
 |---------|------------|
 | `v0.1.x` | Initial project structure — DuckDB, storage layer, Stockfish wrapper, JupyterLab in Docker/k8s. |
-| `v0.2.x` | Full test suite, standardized code style, Stockfish install scripts, CI pipeline, `DECISIONS.md`. Architecture patterns documented (DDD, DI, SOLID, Clean Architecture). Project logo added. |
+| `v0.2.x` | Full test suite, standardized code style, Stockfish install scripts, CI pipeline, `DECISIONS.md`. Architecture patterns documented (DDD, DI, SOLID, Clean Architecture). Project logo added. Domain reorganized into subdomains (`data`, `game`, `move`, `position`, `engine`). `EngineManager` with series/parallel analysis via queue-based workers. `domain/__init__.py` and `utils/__init__.py` stripped bare — all imports from specific submodules. |
 | `v0.3.x` _(planned)_ | MoveManager, GameManager, PGN parsing, ECO openings ingestion. |
 
 ---

@@ -52,7 +52,7 @@ Analysis is explored interactively via **JupyterLab**, and data is stored in **D
 
 The engine layer is designed for robustness, not just speed.
 
-Stockfish is non-deterministic: the same position can produce slightly different evaluations across runs. However, running instances in parallel causes all runs to produce identical results, eliminating variability. To preserve the natural non-determinism of the engine, `ChessEngineManager` runs **N evaluations sequentially** (always an odd number, default 5). Results are aggregated into a **median** (the definitive score), **minimum**, and **maximum**.
+Stockfish is non-deterministic: the same position can produce slightly different evaluations across runs. However, running instances in parallel causes all runs to produce identical results, eliminating variability. To preserve the natural non-determinism of the engine, `EngineManager` runs **N evaluations sequentially** (always an odd number, default 5). Results are aggregated into a **median** (the definitive score), **minimum**, and **maximum**.
 
 The median was chosen over the mean for its resistance to outliers. The odd number of runs guarantees a clean median with no ambiguity.
 
@@ -63,7 +63,7 @@ The full stack:
 | Layer | Technology |
 |---|---|
 | Chess engine | Stockfish 18 (compiled from source in Docker) |
-| Engine orchestration | `ChessEngineManager` + `PositionManager` |
+| Engine orchestration | `EngineManager` |
 | Database | DuckDB (embedded OLAP, OpenData-ready) |
 | Domain & validation | Pydantic |
 | Analysis interface | JupyterLab |

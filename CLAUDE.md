@@ -74,7 +74,7 @@ The application is a chess game analysis pipeline using Stockfish + DuckDB, expo
 
 - **`storage/`** — File system layer. Root at `data/storage/{input,output}/{opening,game,other}/`. `StorageBootstrapper` creates all folders on startup. `StorageManager` reads (bytes for binary, str for text), saves, and deletes files. Valid extensions: `parquet`, `pgn`, `xlsx` (binary); `json` (text).
 
-- **`utils/`** — Shared utilities: `setup_logger.py` (loguru, stdout + rotating file in `logs/`), `generate_hash_id.py` (SHA-512 hash from list of values), `find_engine.py` (resolves Stockfish binary path via `PATH`, common locations, and `bin/` fallback), `get_logic_cpu_available.py` (logical CPUs available based on current usage, 1s sampling interval).
+- **`utils/`** — Shared utilities: `setup_logger.py` (loguru, stdout + rotating file in `logs/`), `generate_hash_id.py` (SHA-512 hash from list of values), `find_engine.py` (resolves Stockfish binary path via `PATH`, common locations, and `bin/` fallback), `get_logic_cpu_available.py` (logical CPUs available based on current usage, 1s sampling interval). The top-level `utils/__init__.py` is intentionally bare — import from specific submodules directly.
 
 - **`_scripts/`** — Internal CLI scripts registered in `pyproject.toml` (currently `clean`).
 
@@ -100,6 +100,7 @@ The application is a chess game analysis pipeline using Stockfish + DuckDB, expo
   ```
 - **Spacing**: always add a blank line before `assert`, `return`, `with raises`, and `yield` statements to keep things readable and not cramped.
 - **Guard assertions**: use `assert x is not None` instead of `# type: ignore` when narrowing types — fails loudly at runtime and satisfies Pyright.
+- **Type syntax**: use `str | None` instead of `Optional[str]`, and builtin generics (`list[str]`, `dict[str, int]`, `tuple[int, ...]`) instead of `typing.List`, `typing.Dict`, `typing.Tuple`.
 
 ### Infrastructure
 
