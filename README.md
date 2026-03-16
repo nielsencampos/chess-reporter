@@ -102,8 +102,7 @@ chess-reporter/
 │   ├── chess-reporter.yaml               # Deployment + Service (NodePort 30888)
 │   └── namespace.yaml
 ├── logs/                                 # Rotating log files (gitignored)
-├── notebooks/
-│   └── workspace.ipynb                   # Interactive analysis notebook
+├── notebooks/                            # JupyterLab notebooks for analysis and exploration
 ├── scripts/
 │   ├── install_stockfish_unix.sh         # Build Stockfish from source (Linux/macOS)
 │   └── install_stockfish_win.ps1         # Install Stockfish (Windows)
