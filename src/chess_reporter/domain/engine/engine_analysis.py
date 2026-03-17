@@ -57,7 +57,6 @@ class EngineAnalysis(BaseModel):
         """
         return self.context.analysis_run
 
-    @computed_field
     @property
     def board(self) -> Board:
         """
@@ -65,7 +64,6 @@ class EngineAnalysis(BaseModel):
         """
         return self.context.position_context.board
 
-    @computed_field
     @property
     def ply(self) -> int:
         """
@@ -73,7 +71,6 @@ class EngineAnalysis(BaseModel):
         """
         return self.board.ply()
 
-    @computed_field
     @property
     def is_finished(self) -> bool:
         """
@@ -81,7 +78,6 @@ class EngineAnalysis(BaseModel):
         """
         return self.context.game_outcome.is_finished
 
-    @computed_field
     @property
     def has_winner(self) -> bool:
         """
@@ -89,7 +85,6 @@ class EngineAnalysis(BaseModel):
         """
         return self.context.game_outcome.has_winner
 
-    @computed_field
     @property
     def is_draw(self) -> bool:
         """
@@ -97,7 +92,6 @@ class EngineAnalysis(BaseModel):
         """
         return self.context.game_outcome.is_draw
 
-    @computed_field
     @property
     def is_white_winner(self) -> bool:
         """
@@ -105,7 +99,6 @@ class EngineAnalysis(BaseModel):
         """
         return self.context.game_outcome.game_result == GameResult.WHITE_WON
 
-    @computed_field
     @property
     def is_black_winner(self) -> bool:
         """
@@ -135,7 +128,6 @@ class EngineAnalysis(BaseModel):
 
         return EngineEvaluationType.NORMAL
 
-    @computed_field
     @cached_property
     def pov_score(self) -> PovScore:
         """
@@ -151,7 +143,6 @@ class EngineAnalysis(BaseModel):
 
         return engine_pov_score if engine_pov_score is not None else PovScore(Cp(0), WHITE)
 
-    @computed_field
     @cached_property
     def pov_wdl(self) -> PovWdl:
         """
@@ -174,7 +165,6 @@ class EngineAnalysis(BaseModel):
             )
         )
 
-    @computed_field
     @cached_property
     def pv_moves(self) -> list[Move]:
         """
@@ -182,7 +172,6 @@ class EngineAnalysis(BaseModel):
         """
         return self.info_dict.get("pv", [])
 
-    @computed_field
     @cached_property
     def refutation(self) -> dict[Move, list[Move]]:
         """
@@ -273,9 +262,7 @@ class EngineAnalysis(BaseModel):
         """
         Time in seconds spent by the engine during the search
         """
-        value = self.info_dict.get("time", 0)
-
-        return float(value) / 1000.0
+        return self.info_dict.get("time", 0.0)
 
     @computed_field
     @cached_property
@@ -293,7 +280,6 @@ class EngineAnalysis(BaseModel):
 
         return "*** No message reported by the engine. ***"
 
-    @computed_field
     @cached_property
     def current_line(self) -> dict[int, list[Move]]:
         """
@@ -301,7 +287,6 @@ class EngineAnalysis(BaseModel):
         """
         return self.info_dict.get("currline", {})
 
-    @computed_field
     @cached_property
     def current_move_number(self) -> int | None:
         """
@@ -309,7 +294,6 @@ class EngineAnalysis(BaseModel):
         """
         return self.info_dict.get("currmovenumber")
 
-    @computed_field
     @cached_property
     def current_move(self) -> MoveContext | None:
         """
@@ -407,7 +391,6 @@ class EngineAnalysis(BaseModel):
 
         return (expected_white - expected_black) * 100.0
 
-    @computed_field
     @cached_property
     def variation_moves(self) -> list[MoveContext]:
         """
@@ -415,7 +398,6 @@ class EngineAnalysis(BaseModel):
         """
         return build_engine_variation_moves(self.board, self.pv_moves)
 
-    @computed_field
     @cached_property
     def refutation_moves(self) -> list[tuple[MoveContext, list[MoveContext]]]:
         """
@@ -423,7 +405,6 @@ class EngineAnalysis(BaseModel):
         """
         return build_engine_refutation_moves(self.board, self.refutation)
 
-    @computed_field
     @cached_property
     def current_line_moves(self) -> list[tuple[int, list[MoveContext]]]:
         """

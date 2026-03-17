@@ -39,7 +39,6 @@ class MoveContext(BaseModel):
         """
         return self.board_before.san(self.move)
 
-    @computed_field
     @cached_property
     def move_is_capture(self) -> bool:
         """
@@ -47,7 +46,6 @@ class MoveContext(BaseModel):
         """
         return self.board_before.is_capture(self.move)
 
-    @computed_field
     @cached_property
     def move_is_castling(self) -> bool:
         """
@@ -55,7 +53,6 @@ class MoveContext(BaseModel):
         """
         return self.board_before.is_castling(self.move)
 
-    @computed_field
     @cached_property
     def move_is_en_passant(self) -> bool:
         """
@@ -63,7 +60,6 @@ class MoveContext(BaseModel):
         """
         return self.board_before.is_en_passant(self.move)
 
-    @computed_field
     @cached_property
     def move_is_promotion(self) -> bool:
         """
@@ -71,7 +67,6 @@ class MoveContext(BaseModel):
         """
         return self.move.promotion is not None
 
-    @computed_field
     @cached_property
     def board_after(self) -> Board:
         """
@@ -82,7 +77,6 @@ class MoveContext(BaseModel):
 
         return board_after
 
-    @computed_field
     @property
     def move_is_check(self) -> bool:
         """
@@ -90,7 +84,6 @@ class MoveContext(BaseModel):
         """
         return self.board_after.is_check()
 
-    @computed_field
     @property
     def move_is_checkmate(self) -> bool:
         """
@@ -98,7 +91,6 @@ class MoveContext(BaseModel):
         """
         return self.board_after.is_checkmate()
 
-    @computed_field
     @property
     def move_is_stalemate(self) -> bool:
         """

@@ -27,7 +27,7 @@ class EngineParameters(BaseModel):
     )
     hash_table_mb: int = Field(
         description="Size of the hash table in megabytes",
-        default=1024,
+        default=4096,
         ge=64,
         frozen=True,
     )
@@ -39,13 +39,13 @@ class EngineParameters(BaseModel):
     )
     multipv: int = Field(
         description="Number of principal variations to calculate",
-        default=5,
+        default=7,
         ge=3,
         frozen=True,
     )
     analyses: int = Field(
         description="Number of analysis runs to perform",
-        default=5,
+        default=7,
         ge=3,
         frozen=True,
     )

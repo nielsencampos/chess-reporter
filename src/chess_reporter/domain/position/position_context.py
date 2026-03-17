@@ -64,7 +64,6 @@ class PositionContext(BaseModel):
         """
         return str(self.board)
 
-    @computed_field
     @cached_property
     def game_outcome(self) -> GameOutcome:
         """
@@ -99,7 +98,6 @@ class PositionContext(BaseModel):
         """
         return PositionTurn.WHITE if self.board.turn else PositionTurn.BLACK
 
-    @computed_field
     @cached_property
     def material_info(self) -> PositionMaterialInfo:
         """
@@ -179,7 +177,6 @@ class PositionContext(BaseModel):
         """
         return self.material_info.material_game_phase
 
-    @computed_field
     @cached_property
     def legal_moves(self) -> PositionLegalMoves:
         """
@@ -195,7 +192,6 @@ class PositionContext(BaseModel):
         """
         return self.legal_moves.count
 
-    @computed_field
     @cached_property
     def captures(self) -> PositionLegalMoves:
         """

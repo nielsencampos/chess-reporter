@@ -45,7 +45,7 @@ class EngineInstance:
             depth=self._parameters.depth,
             multipv=self._parameters.multipv,
             analyses=self._parameters.analyses,
-            in_parallel=self._parameters.parallelism,
+            parallelism=self._parameters.parallelism,
         )
         self._context: EngineContext | None = context
 

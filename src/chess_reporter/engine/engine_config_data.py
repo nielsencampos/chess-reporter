@@ -25,7 +25,7 @@ class EngineConfigData(BaseModel):
     depth: int = Field(description="Search depth", ge=1)
     multipv: int = Field(description="Number of principal variations to calculate", ge=3)
     analyses: int = Field(description="Number of analysis runs to perform", ge=3)
-    in_parallel: bool = Field(
+    parallelism: bool = Field(
         description="Whether to run multiple analyses in parallel using multiprocessing",
     )
     status: DataStatus = Field(
@@ -58,7 +58,7 @@ class EngineConfigData(BaseModel):
             self.depth,
             self.multipv,
             self.analyses,
-            self.in_parallel,
+            self.parallelism,
         ]
 
         value: str = generate_hash_id(values)
