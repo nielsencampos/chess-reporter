@@ -78,7 +78,7 @@ The codebase is structured around **Pydantic `BaseModel`** classes as the single
 
 Code quality is enforced via **Ruff** (lint + format), **Pyright** (static typing), and **pre-commit** hooks. All variables carry explicit type annotations. Tests follow a consistent style: granular imports, multi-line docstrings, and explicit spacing.
 
-The test suite covers domain models, database operations, storage, and Stockfish integration — 120 tests, all passing. Engine tests are skipped automatically in environments without the binary (e.g., CI).
+The test suite covers domain models, database operations, storage, and Stockfish integration — 156 tests, all passing. Engine tests are skipped automatically in environments without the binary (e.g., CI).
 
 ```
 chess-reporter/
@@ -120,7 +120,7 @@ chess-reporter/
 │   ├── utils/                            # Logging (loguru), hashing, engine path resolution
 │   ├── _scripts/                         # Internal CLI scripts (clean)
 │   └── bootstrap.py                      # Storage and database initialisation
-├── tests/                                # Full test suite (120 tests)
+├── tests/                                # Full test suite (156 tests)
 ├── CLAUDE.md                             # Claude Code instructions and conventions
 ├── DATA_DICTIONARY.md                    # Database schema documentation
 ├── DECISIONS.md                          # Architectural and tooling decisions

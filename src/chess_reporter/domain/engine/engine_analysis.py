@@ -9,7 +9,7 @@ from functools import cached_property
 
 from chess import BLACK, WHITE, Board, Move
 from chess.engine import Cp, InfoDict, Mate, PovScore, PovWdl, Wdl
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field
 
 from chess_reporter.domain.game import GameResult
 from chess_reporter.domain.move import MoveContext
@@ -49,7 +49,6 @@ class EngineAnalysis(BaseModel):
         frozen=True,
     )
 
-    @computed_field
     @property
     def analysis_run(self) -> int:
         """
@@ -106,7 +105,6 @@ class EngineAnalysis(BaseModel):
         """
         return self.context.game_outcome.game_result == GameResult.BLACK_WON
 
-    @computed_field
     @cached_property
     def variation_rank(self) -> int:
         """
@@ -114,7 +112,6 @@ class EngineAnalysis(BaseModel):
         """
         return self.info_dict.get("multipv", 1)
 
-    @computed_field
     @cached_property
     def evaluation_type(self) -> EngineEvaluationType:
         """
@@ -179,7 +176,6 @@ class EngineAnalysis(BaseModel):
         """
         return self.info_dict.get("refutation", {})
 
-    @computed_field
     @cached_property
     def search_depth(self) -> int:
         """
@@ -187,7 +183,6 @@ class EngineAnalysis(BaseModel):
         """
         return self.info_dict.get("depth", 0)
 
-    @computed_field
     @cached_property
     def selective_search_depth(self) -> int:
         """
@@ -195,7 +190,6 @@ class EngineAnalysis(BaseModel):
         """
         return self.info_dict.get("seldepth", 0)
 
-    @computed_field
     @cached_property
     def total_positions_evaluated(self) -> int:
         """
@@ -203,7 +197,6 @@ class EngineAnalysis(BaseModel):
         """
         return self.info_dict.get("nodes", 0)
 
-    @computed_field
     @cached_property
     def nodes_per_second(self) -> int:
         """
@@ -211,7 +204,6 @@ class EngineAnalysis(BaseModel):
         """
         return self.info_dict.get("nps", 0)
 
-    @computed_field
     @cached_property
     def ebf(self) -> float:
         """
@@ -230,7 +222,6 @@ class EngineAnalysis(BaseModel):
 
         return nodes ** (1.0 / depth)
 
-    @computed_field
     @cached_property
     def tablebase_hits(self) -> int:
         """
@@ -238,7 +229,6 @@ class EngineAnalysis(BaseModel):
         """
         return self.info_dict.get("tbhits", 0)
 
-    @computed_field
     @cached_property
     def cpu_load(self) -> int | None:
         """
@@ -246,7 +236,6 @@ class EngineAnalysis(BaseModel):
         """
         return self.info_dict.get("cpuload")
 
-    @computed_field
     @cached_property
     def hash_table_usage(self) -> float:
         """
@@ -256,7 +245,6 @@ class EngineAnalysis(BaseModel):
 
         return value / 10.0
 
-    @computed_field
     @cached_property
     def time_in_seconds(self) -> float:
         """
@@ -264,7 +252,6 @@ class EngineAnalysis(BaseModel):
         """
         return self.info_dict.get("time", 0.0)
 
-    @computed_field
     @cached_property
     def message(self) -> str:
         """
@@ -309,7 +296,6 @@ class EngineAnalysis(BaseModel):
             move=move,
         )
 
-    @computed_field
     @cached_property
     def score_type(self) -> EngineScoreType:
         """
@@ -317,7 +303,6 @@ class EngineAnalysis(BaseModel):
         """
         return EngineScoreType.MATE if self.pov_score.is_mate() else EngineScoreType.CENTIPAWNS
 
-    @computed_field
     @cached_property
     def score_value(self) -> int:
         """
@@ -332,7 +317,6 @@ class EngineAnalysis(BaseModel):
 
         return centipawns_value if centipawns_value is not None else 0
 
-    @computed_field
     @cached_property
     def score_in_centipawns(self) -> int:
         """
@@ -349,7 +333,6 @@ class EngineAnalysis(BaseModel):
 
         return mate_score if self.score_value > 0 else -mate_score
 
-    @computed_field
     @cached_property
     def evaluation(self) -> str:
         """
@@ -375,7 +358,6 @@ class EngineAnalysis(BaseModel):
 
         return f"+#{self.score_value}" if self.score_value > 0 else f"-#{self.score_value}"
 
-    @computed_field
     @cached_property
     def win_probability_balance(self) -> float:
         """

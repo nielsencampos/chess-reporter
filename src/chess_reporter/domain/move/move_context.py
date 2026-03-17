@@ -7,7 +7,7 @@ from __future__ import annotations
 from functools import cached_property
 
 from chess import Board, Move
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class MoveContext(BaseModel):
@@ -23,7 +23,6 @@ class MoveContext(BaseModel):
     )
     move: Move = Field(description="Move instance representing the chess move")
 
-    @computed_field
     @property
     def move_uci(self) -> str:
         """
@@ -31,7 +30,6 @@ class MoveContext(BaseModel):
         """
         return self.move.uci()
 
-    @computed_field
     @cached_property
     def move_san(self) -> str:
         """

@@ -39,13 +39,13 @@ class EngineParameters(BaseModel):
     )
     multipv: int = Field(
         description="Number of principal variations to calculate",
-        default=7,
+        default=5,
         ge=3,
         frozen=True,
     )
     analyses: int = Field(
         description="Number of analysis runs to perform",
-        default=7,
+        default=5,
         ge=3,
         frozen=True,
     )

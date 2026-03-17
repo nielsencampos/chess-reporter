@@ -21,13 +21,13 @@ class DatabaseParameters(BaseModel):
         frozen=True,
     )
     threads: int = Field(
-        default=2,
+        default=4,
         description="Number of execution threads for DuckDB",
         frozen=True,
         ge=1,
     )
     memory_limit: str = Field(
-        default="2GB",
+        default="4GB",
         description="Maximum memory limit for DuckDB",
         frozen=True,
     )

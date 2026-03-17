@@ -7,7 +7,7 @@ from __future__ import annotations
 from functools import cached_property
 
 from chess import Board
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field
 
 from chess_reporter.domain.game import (
     GameOutcome,
@@ -40,7 +40,6 @@ class PositionContext(BaseModel):
         default=None,
     )
 
-    @computed_field
     @property
     def fen(self) -> str:
         """
@@ -48,7 +47,6 @@ class PositionContext(BaseModel):
         """
         return self.board.fen()
 
-    @computed_field
     @property
     def chess960(self) -> bool:
         """
@@ -56,7 +54,6 @@ class PositionContext(BaseModel):
         """
         return self.board.chess960
 
-    @computed_field
     @property
     def ascii_board(self) -> str:
         """
@@ -74,7 +71,6 @@ class PositionContext(BaseModel):
 
         return get_position_game_outcome_from_board(self.board)
 
-    @computed_field
     @property
     def game_termination(self) -> GameTermination:
         """
@@ -82,7 +78,6 @@ class PositionContext(BaseModel):
         """
         return self.game_outcome.game_termination
 
-    @computed_field
     @property
     def game_result(self) -> GameResult:
         """
@@ -90,7 +85,6 @@ class PositionContext(BaseModel):
         """
         return self.game_outcome.game_result
 
-    @computed_field
     @property
     def turn(self) -> PositionTurn:
         """
@@ -105,7 +99,6 @@ class PositionContext(BaseModel):
         """
         return get_position_material_info_from_board(self.board)
 
-    @computed_field
     @property
     def white_material(self) -> int:
         """
@@ -113,7 +106,6 @@ class PositionContext(BaseModel):
         """
         return self.material_info.white_material
 
-    @computed_field
     @property
     def white_piece_count(self) -> int:
         """
@@ -121,7 +113,6 @@ class PositionContext(BaseModel):
         """
         return self.material_info.white_piece_count
 
-    @computed_field
     @property
     def black_material(self) -> int:
         """
@@ -129,7 +120,6 @@ class PositionContext(BaseModel):
         """
         return self.material_info.black_material
 
-    @computed_field
     @property
     def black_piece_count(self) -> int:
         """
@@ -137,7 +127,6 @@ class PositionContext(BaseModel):
         """
         return self.material_info.black_piece_count
 
-    @computed_field
     @property
     def overall_material(self) -> int:
         """
@@ -145,7 +134,6 @@ class PositionContext(BaseModel):
         """
         return self.material_info.overall_material
 
-    @computed_field
     @property
     def overall_piece_count(self) -> int:
         """
@@ -153,7 +141,6 @@ class PositionContext(BaseModel):
         """
         return self.material_info.overall_piece_count
 
-    @computed_field
     @property
     def material_balance(self) -> int:
         """
@@ -161,7 +148,6 @@ class PositionContext(BaseModel):
         """
         return self.material_info.material_balance
 
-    @computed_field
     @property
     def piece_count_balance(self) -> int:
         """
@@ -169,7 +155,6 @@ class PositionContext(BaseModel):
         """
         return self.material_info.piece_count_balance
 
-    @computed_field
     @property
     def material_game_phase(self) -> GamePhase:
         """
@@ -184,7 +169,6 @@ class PositionContext(BaseModel):
         """
         return get_position_legal_moves_from_board(self.board)
 
-    @computed_field
     @property
     def legal_moves_count(self) -> int:
         """
@@ -199,7 +183,6 @@ class PositionContext(BaseModel):
         """
         return self.legal_moves.captures
 
-    @computed_field
     @property
     def captures_count(self) -> int:
         """
