@@ -22,7 +22,7 @@ dist/
 .mypy_cache/
 
 # Environment variables
-.env
+.env*
 
 # IDE
 .vscode/
@@ -32,7 +32,6 @@ dist/
 logs/*.log
 
 # Secrets
-secrets.toml
 
 # OS files
 .DS_Store

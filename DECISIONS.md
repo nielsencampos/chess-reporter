@@ -1,18 +1,18 @@
-# DECISIONS.md
+﻿# DECISIONS.md
 
 ## Project Overview
 
 Chess Reporter is a personal portfolio project born from a genuine passion for chess, software engineering, and data architecture.
 
-The goal is to perform cold, objective analysis of chess games and openings — free from emotion or bias. Every move is evaluated by Stockfish and assigned an accuracy score. Crucially, the analysis does not stop at the last move: the **termination context** is taken into account as part of the overall player score. For example:
+The goal is to perform cold, objective analysis of chess games and openings â€” free from emotion or bias. Every move is evaluated by Stockfish and assigned an accuracy score. Crucially, the analysis does not stop at the last move: the **termination context** is taken into account as part of the overall player score. For example:
 
-- A player who **loses on time** but was in a winning position will have their accuracy penalized — the result does not reflect their play.
-- A player who **accepts a draw** while holding a clear advantage will also be penalized — leaving a win on the board is a decision, and decisions are measured.
+- A player who **loses on time** but was in a winning position will have their accuracy penalized â€” the result does not reflect their play.
+- A player who **accepts a draw** while holding a clear advantage will also be penalized â€” leaving a win on the board is a decision, and decisions are measured.
 - Conversely, a player who **loses from a lost position** is not unfairly punished by the termination itself.
 
 This approach produces a more honest and complete picture of how well each player actually played, beyond just the final result.
 
-The project also serves as a showcase of the author's passion for chess, architecture, and engineering — combining domain knowledge with modern tooling into something that is both useful and maintainable.
+The project also serves as a showcase of the author's passion for chess, architecture, and engineering â€” combining domain knowledge with modern tooling into something that is both useful and maintainable.
 
 ---
 
@@ -26,7 +26,7 @@ This document captures the architectural and tooling decisions made throughout t
 Python was chosen for its accessibility, rich ecosystem, and lack of a compilation step. It has strong support for chess libraries (e.g., `python-chess`), data processing, and analytical workloads. Python has also been maturing rapidly in terms of performance and type safety, making it a reliable choice for long-term projects.
 
 ### uv
-`uv` replaces `pip` and `virtualenv` as the dependency and environment manager. It provides deterministic dependency resolution, faster installs, and cleaner version control — making it easier to reproduce environments across local development, CI, and Docker.
+`uv` replaces `pip` and `virtualenv` as the dependency and environment manager. It provides deterministic dependency resolution, faster installs, and cleaner version control â€” making it easier to reproduce environments across local development, CI, and Docker.
 
 ---
 
@@ -37,13 +37,13 @@ Python was chosen for its accessibility, rich ecosystem, and lack of a compilati
 Stockfish is the strongest open-source chess engine available and serves as the analysis backbone of the project.
 
 **Why run N times in series?**
-Early testing revealed that running the same position once could produce slightly different evaluations across runs — non-determinism inherent to Stockfish's internal search. However, when `N` engine instances were run in parallel, all runs produced identical results for the same position, eliminating any variability. Running the same position in series (one after another) was what actually produced different evaluations across runs, preserving the natural non-determinism of the engine. To address this, `EngineManager` runs `N` evaluations sequentially (always an odd number, default `5`). The results are aggregated into a **median** (used as the definitive score), **minimum**, and **maximum** — giving a statistical picture of the evaluation rather than a single potentially noisy value. The odd number of runs guarantees a clean median with no ambiguity.
+Early testing revealed that running the same position once could produce slightly different evaluations across runs â€” non-determinism inherent to Stockfish's internal search. However, when `N` engine instances were run in parallel, all runs produced identical results for the same position, eliminating any variability. Running the same position in series (one after another) was what actually produced different evaluations across runs, preserving the natural non-determinism of the engine. To address this, `EngineManager` runs `N` evaluations sequentially (always an odd number, default `5`). The results are aggregated into a **median** (used as the definitive score), **minimum**, and **maximum** â€” giving a statistical picture of the evaluation rather than a single potentially noisy value. The odd number of runs guarantees a clean median with no ambiguity.
 
 **Why the median?**
-The median is more robust than the mean against outliers. It is the value that will be used to compute move accuracy — by comparing the median eval before and after a move, a score between 0 and 100% (float) will be assigned to each move. The min/max values are preserved for future features.
+The median is more robust than the mean against outliers. It is the value that will be used to compute move accuracy â€” by comparing the median eval before and after a move, a score between 0 and 100% (float) will be assigned to each move. The min/max values are preserved for future features.
 
 **Avoiding redundant analysis**
-Positions are not re-analyzed unnecessarily — the same position with the same termination state is not re-evaluated. This avoids wasted compute and keeps analysis deterministic for caching and storage purposes.
+Positions are not re-analyzed unnecessarily â€” the same position with the same termination state is not re-evaluated. This avoids wasted compute and keeps analysis deterministic for caching and storage purposes.
 
 **Validation against external sources**
 Evaluations from this pipeline were compared against evals from chess.com and lichess.com across multiple positions. Results were consistent, validating the approach.
@@ -52,147 +52,44 @@ Evaluations from this pipeline were compared against evals from chess.com and li
 After extensive testing, running Stockfish inside Docker and Kubernetes proved significantly more stable than running it natively on the host. Resource isolation, consistent CPU/memory allocation, and the absence of competing system processes all contributed to more reliable and reproducible evaluations. This was a key factor in adopting the containerized deployment model.
 
 **Why 4 threads?**
-The number of Stockfish threads was set to `4` based on both empirical testing and external benchmarks. Thread counts from 1 to 12 were tested by comparing the resulting evaluations against known analyses from chess.com and lichess.com across multiple positions. `4` threads produced evaluations most consistent with those references. A notable finding: `2` threads performed worse than `1` thread — an unexpected result that reinforced the need for empirical validation rather than assuming linear scaling. This is also consistent with data from the [CCRL benchmark (Stockfish 18, 4CPU)](https://www.computerchess.org.uk/ccrl/4040/cgi/engine_details.cgi?match_length=30&print=Details&each_game=1&eng=Stockfish%2018%2064-bit%204CPU), a well-established independent rating list that shows Stockfish's strength scaling significantly from 1 to 4 threads with diminishing returns beyond that. 4 threads represents the sweet spot between analysis quality and resource consumption — strong enough to produce evaluations comparable to what chess.com and lichess use, without over-provisioning CPU in a containerized environment.
+The number of Stockfish threads was set to `4` based on both empirical testing and external benchmarks. Thread counts from 1 to 12 were tested by comparing the resulting evaluations against known analyses from chess.com and lichess.com across multiple positions. `4` threads produced evaluations most consistent with those references. A notable finding: `2` threads performed worse than `1` thread â€” an unexpected result that reinforced the need for empirical validation rather than assuming linear scaling. This is also consistent with data from the [CCRL benchmark (Stockfish 18, 4CPU)](https://www.computerchess.org.uk/ccrl/4040/cgi/engine_details.cgi?match_length=30&print=Details&each_game=1&eng=Stockfish%2018%2064-bit%204CPU), a well-established independent rating list that shows Stockfish's strength scaling significantly from 1 to 4 threads with diminishing returns beyond that. 4 threads represents the sweet spot between analysis quality and resource consumption â€” strong enough to produce evaluations comparable to what chess.com and lichess use, without over-provisioning CPU in a containerized environment.
 
 ---
 
 ## Storage & Data
 
-### DuckDB
-DuckDB was chosen as the embedded analytical database (OLAP) for the project. Being serverless and file-based, it requires no infrastructure to run locally or in a container. A key motivation is the concept of **OpenData** — the ability to ship or publish the `.duckdb` file as a self-contained, open dataset that anyone can query directly, without needing a running database server.
-
-### Pydantic
-All configuration, domain models, and parameters are defined as Pydantic `BaseModel` classes. This provides runtime validation, clear contracts between components, and a single source of truth for defaults and paths.
-
 ---
 
-## Architecture Patterns
+## Microservices Rebuild (v0.3.x)
 
-### Domain-Driven Design (DDD)
+### Why microservices?
 
-The codebase is organized around the chess domain, not around technical layers. The `domain/` package is the authoritative source for all domain concepts, organized by subdomain: `data`, `game`, `move`, `position`, `engine`. These are not DTOs or database rows — they are first-class domain objects that carry meaning, rules, and validation.
+The original monolith combined Stockfish, DuckDB, and JupyterLab in a single container. As analysis requirements grew - multiple concurrent positions, long-running engine jobs, independent scaling of the engine layer - the monolith became a constraint. The rebuild separates concerns cleanly: each service does one thing and can be scaled, deployed, and updated independently.
 
-This reflects years of experience building systems where the domain model is the core of the application, with infrastructure (database, storage, engine) built around it — not the other way around. When a domain concept changes, it changes in one place and the rest of the system adapts to it.
+### engine-instance: one FEN at a time
 
-The ubiquitous language from chess is preserved throughout the codebase: positions are analyzed, moves are evaluated, terminations are classified. There is no artificial mapping between a "chess world" and a "technical world" — the domain speaks for itself.
+Each engine instance processes a single position at a time. This is a deliberate design choice - Stockfish is CPU-bound and benefits from full resource allocation per analysis. The async job pattern (BackgroundTasks + module-level state + threading.Lock) allows the HTTP layer to remain responsive while the engine runs for minutes without blocking the event loop.
 
-### Dependency Injection (DI)
+### engine-master: observer, not owner
 
-Managers receive their dependencies explicitly at construction time rather than resolving them internally or relying on global state. `EngineManager` takes `EngineParameters`; `DatabaseManager` takes a path. Configuration flows in through Pydantic parameter objects — not environment variable lookups scattered across modules.
+The master holds no analysis state. It observes instance health, fans out requests in parallel via ThreadPoolExecutor, and aggregates results. Scaling is handled by patching the StatefulSet replica count via the Kubernetes API on startup and shutdown.
 
-This makes the system testable (dependencies can be controlled in tests), auditable (the dependency graph is visible just by reading constructors), and composable (managers can be assembled differently for different contexts — Docker, local dev, tests).
+### StatefulSet for engine instances
 
-The lifecycle pattern (`instantiate → use → close()`) is a direct consequence of explicit injection: when you own the dependency, you are responsible for releasing it cleanly. This is enforced consistently across all managers.
+Engine instances use a StatefulSet (not a Deployment) because the master addresses each pod individually via stable DNS. A Deployment would provide no stable pod identity. The headless service (clusterIP: None) enables per-pod DNS without load balancing, which is exactly what fan-out requires.
 
-### SOLID
+### Shared schemas package
 
-SOLID principles are applied throughout, with the most visible being:
+All Pydantic models shared across services live in chess-reporter-schemas, a separate uv workspace member. This prevents schema drift between services and makes the contract between instance and master explicit and versioned.
 
-- **Single Responsibility**: each manager owns exactly one concern — `EngineManager` runs the engine, `DatabaseManager` speaks to DuckDB, `StorageManager` handles files. No manager bleeds into another's domain.
-- **Open/Closed**: Pydantic parameter classes act as contracts. Adding new configuration or behavior means extending the model — not rewriting existing logic.
-- **Interface Segregation**: managers expose only what is needed for their context. There are no "god interfaces" that bundle unrelated operations.
-- **Dependency Inversion**: the highest-level managers depend on abstractions passed in at construction time, never on concrete internal instantiations. This is what makes the system testable and the dependency graph explicit.
-- **Liskov Substitution**: less prominent here due to the deliberate avoidance of deep inheritance hierarchies — which is itself a conscious choice aligned with composition over inheritance.
+### Port conventions
 
-### Clean Architecture — the principle, not the ceremony
+Internal ports follow a simple numeric convention: master=1000, instances=1001-1023 (mask 1999). This mirrors the logical hierarchy without wasting the NodePort range (30000-32767), which is reserved for external exposure only.
 
-Clean Architecture in its canonical form (Uncle Bob) was designed for large, multi-team systems with complex use-case orchestration, multiple entry points, and strict layer separation enforced at every level. Applying that full structure — explicit Use Case classes, Interface Adapters, Presenters — to an analytical pipeline would be over-engineering: ceremony without benefit.
+### PostgreSQL
 
-What this project applies is the **core principle** that Clean Architecture is built on: the **dependency rule**. The domain (`domain/`) is pure and has zero knowledge of infrastructure. The infrastructure (database, storage, engine) depends on the domain — never the other way around. Domain concepts change for domain reasons only, not because a database schema changed or a file format shifted.
+PostgreSQL replaces DuckDB as the persistence layer for the microservices architecture. DuckDB remains suitable for local analytical exploration (JupyterLab), but PostgreSQL is the right choice for a multi-service system where multiple pods need concurrent read/write access. Connection is injected via DATABASE_URL environment variable, allowing transparent swap between local (docker-compose) and AWS RDS without code changes.
 
-This is a deliberate, modern take: extract the architectural value — domain isolation and clear dependency direction — without importing the full formal structure that only pays off at a different scale. The result is a system that is easier to navigate, easier to test, and easier to evolve, precisely because it respects the spirit of Clean Architecture without being enslaved to its taxonomy.
+### Environment files by service and environment
 
----
-
-## Code Quality
-
-### Ruff
-Ruff handles both linting and formatting in a single fast tool. It enforces code style, catches common mistakes, and keeps the codebase consistent across contributors.
-
-### Pyright
-Pyright performs static type checking. Combined with explicit type annotations on all variables and function signatures, it catches type errors at development time before they reach runtime.
-
-### pre-commit
-pre-commit runs ruff and pyright (plus YAML and whitespace checks) automatically before every commit, acting as a quality gate to prevent unreviewed code from being committed.
-
----
-
-## Testing
-
-### pytest
-pytest is the testing framework and the backbone of the development loop. The test suite covers domain models, database operations, storage, and engine integration. Beyond just catching regressions, it makes it safe to evolve the codebase aggressively — new managers and features can be built with confidence that existing behaviour is not silently broken. Stockfish-dependent tests are automatically skipped when the binary is not present (e.g., in CI), keeping the suite green without compromising coverage where it matters.
-
----
-
-## Infrastructure
-
-### Docker
-The full application environment — Python, Stockfish, and JupyterLab — is packaged in a multi-stage Docker image. This ensures reproducibility across machines and makes deployment to Kubernetes straightforward.
-
-### Kubernetes
-k8s was chosen with future scalability in mind. As the project grows and additional features or services are introduced, Kubernetes provides a clean foundation for running multiple components together with proper resource control and easy redeployment.
-
-### GitHub — Repository, Actions & Packages
-
-The project lives in a **public GitHub repository**. Being public is intentional — it is part of the portfolio purpose. The code, decisions, and architecture are open for anyone to read, fork, or learn from.
-
-**GitHub Actions** automates the CI pipeline. On every push, the workflow installs dependencies via `uv` and runs the full test suite. Stockfish-dependent tests are skipped in CI since the binary is not available in the runner — but the rest of the suite (domain, database, storage, utils) runs in full. This keeps the feedback loop fast and reliable without requiring a chess engine in the cloud.
-
-**GitHub Packages (GHCR)** hosts the Docker image. After every release, the image is built locally and pushed to `ghcr.io/nielsencampos/chess-reporter:latest`. Kubernetes then pulls from GHCR on rollout — keeping the deployment simple and the image registry co-located with the source code, under the same GitHub account. No external registry needed.
-
----
-
-## Developer Experience
-
-### JupyterLab
-JupyterLab serves as the primary interface for chess analysis and data exploration. It runs inside the Docker container and is exposed via Kubernetes, making it accessible from the browser without any local setup.
-
-### Claude Code
-Claude Code is used as a development accelerator — assisting with architecture decisions, code generation, commit messages, and deployments. It is treated as a collaborative engineering partner, not a replacement for design thinking.
-
-### loguru
-loguru handles structured logging with minimal boilerplate. Logs are written to stdout and to rotating files under `logs/`, making them accessible both in development and inside containers.
-
-### sqlglot
-sqlglot is used to parse and validate SQL before it reaches DuckDB. It classifies query types (DQL, DML, DDL, DCL) and ensures only well-formed SQL is executed.
-
----
-
-## Versioning
-
-Versions follow a `MAJOR.MINOR.PATCH` pattern and are tagged in git. Each minor version represents a meaningful milestone in the project's evolution.
-
-| Version | Highlights |
-|---------|------------|
-| `v0.1.x` | Initial project structure — DuckDB, storage layer, Stockfish wrapper, JupyterLab in Docker/k8s. |
-| `v0.2.x` | Full test suite, standardized code style, Stockfish install scripts, CI pipeline, `DECISIONS.md`. Architecture patterns documented (DDD, DI, SOLID, Clean Architecture). Project logo added. Domain reorganized into subdomains (`data`, `game`, `move`, `position`, `engine`). `EngineManager` with series/parallel analysis via queue-based workers. `domain/__init__.py` and `utils/__init__.py` stripped bare — all imports from specific submodules. |
-| `v0.3.x` _(planned)_ | MoveManager, GameManager, PGN parsing, ECO openings ingestion. |
-
----
-
-## Roadmap
-
-The project evolves incrementally as the understanding of cold chess analysis deepens. Below are the planned next steps following the stabilization and documentation phase (`v0.2.x`).
-
-### New Managers
-
-- **MoveManager** — responsible for processing individual moves within a game, computing per-move accuracy from sequential Stockfish evaluations (median before and after each move), and classifying moves on a 0–100% float scale.
-- **GameManager** — orchestrates the full game pipeline: ingesting a PGN, running all positions through the engine, applying termination context penalties, and producing a complete game report per player.
-
-### PGN Parsing
-
-PGN (Portable Game Notation) is the universal raw format for chess games and will be the primary data input of the pipeline. A dedicated parser will be developed to extract structured data from PGN files — moves, metadata (players, date, result, time control), and termination type — feeding it into the analysis pipeline.
-
-### ECO Openings
-
-Chess openings are classified under the **ECO (Encyclopedia of Chess Openings)** system. The full dataset of known openings is publicly available from Lichess:
-
-```
-https://api.github.com/repos/lichess-org/chess-openings/contents/
-```
-
-The files are in TSV format and will be downloaded, processed, and stored in DuckDB. This will allow the pipeline to identify the opening played in each game and provide context on whether it was a sound or dubious choice — evaluated against Stockfish's assessment of the resulting positions.
-
-### Philosophy
-
-This is a project that grows with knowledge. As the understanding of how to objectively measure chess quality evolves — move by move, opening by opening, termination by termination — so does the pipeline. There is no fixed endpoint: every new insight about chess analysis becomes a new feature.
+Credentials are split into per-service, per-environment .env files (.env.postgresql.local, .env.k8s, etc.) rather than a single .env. This prevents credential leakage across services and makes the AWS migration path explicit: swap .env.postgresql.local for .env.postgresql.aws with the RDS endpoint.

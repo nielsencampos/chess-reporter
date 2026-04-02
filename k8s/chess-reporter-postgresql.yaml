@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: chess-reporter-postgresql
+  namespace: chess-reporter
+type: Opaque
+stringData:
+  POSTGRES_DB: chess_reporter
+  POSTGRES_USER: chess_reporter
+  POSTGRES_PASSWORD: chess_reporter
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: chess-reporter-postgresql
+  namespace: chess-reporter
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chess-reporter-postgresql
+  namespace: chess-reporter
+spec:
+  selector:
+    app: chess-reporter-postgresql
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chess-reporter-postgresql
+  namespace: chess-reporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chess-reporter-postgresql
+  template:
+    metadata:
+      labels:
+        app: chess-reporter-postgresql
+    spec:
+      containers:
+        - name: chess-reporter-postgresql
+          image: postgres:latest
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - secretRef:
+                name: chess-reporter-postgresql
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "chess_reporter", "-d", "chess_reporter"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: chess-reporter-postgresql

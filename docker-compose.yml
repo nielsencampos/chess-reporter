@@ -1,0 +1,26 @@
+services:
+  chess-reporter-postgresql:
+    image: postgres:latest
+    env_file:
+      - .env.postgresql.local
+    ports:
+      - "5432:5432"
+    volumes:
+      - chess-reporter-postgresql:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chess_reporter -d chess_reporter"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  chess-reporter-jupyter-lab:
+    build:
+      context: .
+      dockerfile: docker/chess-reporter-jupyter-lab.Dockerfile
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/app/notebooks
+
+volumes:
+  chess-reporter-postgresql:

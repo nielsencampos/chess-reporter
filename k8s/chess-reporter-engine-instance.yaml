@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: chess-reporter-engine-instance
+  namespace: chess-reporter
+spec:
+  clusterIP: None
+  selector:
+    app: chess-reporter-engine-instance
+  ports:
+    - port: 1999
+      targetPort: 1999
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: chess-reporter-engine-instance
+  namespace: chess-reporter
+spec:
+  replicas: 1
+  serviceName: chess-reporter-engine-instance
+  selector:
+    matchLabels:
+      app: chess-reporter-engine-instance
+  template:
+    metadata:
+      labels:
+        app: chess-reporter-engine-instance
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: chess-reporter-engine-instance
+          image: ghcr.io/nielsencampos/chess-reporter-engine-instance:latest
+          ports:
+            - containerPort: 1999
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 1999
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 1999
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: "1500m"
+              memory: "2Gi"
+            limits:
+              cpu: "1500m"
+              memory: "2Gi"
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi
